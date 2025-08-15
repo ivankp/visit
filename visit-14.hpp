@@ -24,6 +24,7 @@ auto Visit(X&& x, F&& callback)
     using Target = callback_type_t<F, 1>;
     if (!match<std::decay_t<Target>>(x))
         return false;
+    // Forward when there is only one argument.
     callback(convert<Target>(std::forward<X>(x)));
     return true;
 }
@@ -35,6 +36,7 @@ auto Visit(X&& x, F&& callback)
     using Target = callback_type_t<F, 1>;
     if (!match<std::decay_t<Target>>(x))
         return false;
+    // The same value cannot be forwarded to multiple arguments.
     callback(convert<Target>(x), x);
     return true;
 }
@@ -46,24 +48,22 @@ auto Visit(X&& x, F&& callback)
     using Target = callback_type_t<F, 2>;
     if (!match<std::decay_t<Target>>(x))
         return false;
+    // The same value cannot be forwarded to multiple arguments.
     callback(x, convert<Target>(x));
     return true;
 }
 
 template <typename X, typename F>
 auto Visit(X&& x, F&& callback)
--> decltype(callback(x), bool{})
+-> decltype(callback(std::forward<X>(x)), bool{})
 {
-    using Target = callback_type_t<F, 1>;
-    if (!match<std::decay_t<Target>>(x))
-        return false;
-    callback(x);
+    // Forward when there is only one argument.
+    callback(std::forward<X>(x));
     return true;
 }
 
 template <typename X, typename F, typename... Fs>
 bool Visit(X&& x, F&& callback, Fs&&... callbacks) {
-    cout << __PRETTY_FUNCTION__ << endl;
     return Visit(std::forward<X>(x), std::forward<F>(callback)) ||
            Visit(std::forward<X>(x), std::forward<Fs>(callbacks)...);
 }

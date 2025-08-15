@@ -27,8 +27,8 @@ requires requires {
   std::begin(xs) != std::end(xs);
 }
 {
-    for (auto& x : xs) {
-        Visit(x, std::forward<F>(callback)...);
+    for (auto&& x : xs) {
+        Visit(x, callback...);
     }
 }
 
