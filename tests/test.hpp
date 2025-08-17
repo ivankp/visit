@@ -26,6 +26,9 @@ int main() {
     }
 }
 
+#define STR(X) STR1(X)
+#define STR1(X) #X
+
 #define TEST(NAME) \
     void NAME(); \
     RegisterTest RegisterTest_##NAME(&NAME, #NAME); \
@@ -33,15 +36,18 @@ int main() {
 
 #define TEST_EQ(LHS, RHS) \
     if (!( (LHS) == (RHS) )) { \
-        throw std::runtime_error(#LHS " != " #RHS); \
+        throw std::runtime_error(STR(__LINE__) ": " #LHS " != " #RHS); \
     }
 
 #define TEST_TRUE(X) \
     if (!(X)) { \
-        throw std::runtime_error(#X " is false"); \
+        throw std::runtime_error(STR(__LINE__) ": " #X " is false"); \
     }
 
 #define TEST_FALSE(X) \
     if ((X)) { \
-        throw std::runtime_error(#X " is true"); \
+        throw std::runtime_error(STR(__LINE__) ": " #X " is true"); \
     }
+
+#define TEST_FAIL \
+      throw std::runtime_error(STR(__LINE__) ": test failed");
