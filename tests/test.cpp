@@ -9,18 +9,18 @@
 using std::cout;
 using std::endl;
 
-#if 0
+#if __cplusplus >= 202002L
 template <typename X, typename T>
 concept DecaysTo = std::same_as<T, std::decay_t<X>>;
 
-template <typename T, DecaysTo<Any> X>
+template <typename T, DecaysTo<boost::any> X>
 bool match(X&& x) noexcept {
-    return Has<T>(x);
+    return x.type() == typeid(T);
 }
 
-template <typename T, DecaysTo<Any> X>
+template <typename T, DecaysTo<boost::any> X>
 T convert(X&& x) {
-    return Get<T>(x);
+    return boost::any_cast<T>(std::forward<X>(x));
 }
 
 #else
@@ -60,7 +60,8 @@ TEST(Visit_SingleValue) {
     boost::any x(1);
 
     Visit(x,
-        [](int) {
+        [](int x) {
+            TEST_EQ(x, 1);
         },
         [](const boost::any&) {
             TEST_FAIL;
