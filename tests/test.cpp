@@ -28,20 +28,48 @@ struct VisitADL<boost::any, To> {
     }
 };
 
-TEST(Visit_SingleValue) {
+template <typename Xs, typename... F>
+auto VisitEach(Xs&& xs, F&&... callback)
+-> decltype((std::begin(xs) != std::end(xs)), void{})
+{
+    for (auto&& x : xs) {
+        Visit(x, callback...);
+    }
+}
+
+TEST(Visit_Single_ByConstRef) {
     bool called = false;
     Visit(boost::any(1),
-        [&](int x) {
+        [&](const boost::any& x) {
             called = true;
-            TEST_EQ(x, 1);
-        },
-        [](const boost::any&) {
-            TEST_FAIL;
+            TEST_EQ(boost::any_cast<int>(x), 1);
         }
     );
     TEST_TRUE(called);
-
-    called = false;
+}
+TEST(Visit_Single_ByMutRef) {
+    bool called = false;
+    boost::any x(1);
+    Visit(x,
+        [&](boost::any& x) {
+            called = true;
+            TEST_EQ(boost::any_cast<int>(x), 1);
+        }
+    );
+    TEST_TRUE(called);
+}
+TEST(Visit_Single_ByRRef) {
+    bool called = false;
+    Visit(boost::any(1),
+        [&](boost::any&& x) {
+            called = true;
+            TEST_EQ(boost::any_cast<int>(x), 1);
+        }
+    );
+    TEST_TRUE(called);
+}
+TEST(Visit_Single_ByValue) {
+    bool called = false;
     Visit(boost::any(1),
         [&](boost::any x) {
             called = true;
@@ -51,13 +79,48 @@ TEST(Visit_SingleValue) {
     TEST_TRUE(called);
 }
 
-template <typename Xs, typename... F>
-auto VisitEach(Xs&& xs, F&&... callback)
--> decltype((std::begin(xs) != std::end(xs)), void{})
-{
-    for (auto&& x : xs) {
-        Visit(x, callback...);
-    }
+TEST(Visit_Single_MultipleCallbacks) {
+    bool called_int = false;
+    Visit(boost::any(1),
+        [&](int x) {
+            called_int = true;
+            TEST_EQ(x, 1);
+        },
+        [](unsigned) {
+            TEST_FAIL;
+        },
+        [](const boost::any&) {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called_int);
+
+    called_int = false;
+    Visit(boost::any(1),
+        [](unsigned) {
+            TEST_FAIL;
+        },
+        [&](int x) {
+            called_int = true;
+            TEST_EQ(x, 1);
+        },
+        [](const boost::any&) {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called_int);
+
+    bool called_any = false;
+    Visit(boost::any(1),
+        [](unsigned) {
+            TEST_FAIL;
+        },
+        [&](const boost::any& x) {
+            called_any = true;
+            TEST_EQ(boost::any_cast<int>(x), 1);
+        }
+    );
+    TEST_TRUE(called_any);
 }
 
 TEST(visit_vector) {
