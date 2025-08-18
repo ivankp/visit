@@ -123,6 +123,23 @@ TEST(Visit_Single_MultipleCallbacks) {
     TEST_TRUE(called_any);
 }
 
+TEST(Visit_AnyInsideAny) {
+    boost::any outer;
+    boost::any inner(2);
+    outer = inner;
+    TEST_EQ(boost::any_cast<int>(inner), 2);
+    TEST_EQ(boost::any_cast<int>(outer), 2);
+
+    bool called = false;
+    Visit(outer,
+        [&](const boost::any& x) {
+            called = true;
+            TEST_EQ(boost::any_cast<int>(x), 2);
+        }
+    );
+    TEST_TRUE(called);
+}
+
 TEST(visit_vector) {
     std::vector<boost::any> xs { 3, 2.5, 'D', 71, "Text" };
 
