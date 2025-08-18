@@ -26,28 +26,24 @@ void Visit(X&& x, F&&... callback) {
         if constexpr (requires { callback(std::forward<X>(x)); }) {
             // Forward when there is only one argument.
             callback(std::forward<X>(x));
-            return true;
         } else if constexpr (requires { callback(detail::AnyArg{}); }) {
             using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 1>>;
             if (!ADL::match(x))
                 return false;
             // Forward when there is only one argument.
             callback(ADL::convert(std::forward<X>(x)));
-            return true;
         } else if constexpr (requires { callback(detail::AnyArg{}, x); }) {
             using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 1>>;
             if (!ADL::match(x))
                 return false;
             // The same value cannot be forwarded to multiple arguments.
             callback(ADL::convert(x), x);
-            return true;
         } else if constexpr (requires { callback(x, detail::AnyArg{}); }) {
             using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 2>>;
             if (!ADL::match(x))
                 return false;
             // The same value cannot be forwarded to multiple arguments.
             callback(x, ADL::convert(x));
-            return true;
         } else {
             static_assert(
                 false,
@@ -56,5 +52,6 @@ void Visit(X&& x, F&&... callback) {
                 "match<T>(x) and convert<T>(x) are implemented."
             );
         }
+        return true;
     }() || ...);
 }
