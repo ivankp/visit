@@ -5,47 +5,48 @@
 
 namespace detail {
 
-template <typename T, typename X>
-concept VisitTarget = requires (X x) {
-    match<T>(x);
-    convert<T>(x);
-};
-
-template <typename X>
-struct TargetArg {
-    template <VisitTarget<X> T>
+struct AnyArg {
+    template <typename T>
     operator T();
 };
 
 }
 
+template <typename From, typename To, typename = void>
+struct VisitADL {
+    static_assert(
+        false,
+        "VisitADL is not specialized for these types"
+    );
+};
+
 template <typename X, typename... F>
 void Visit(X&& x, F&&... callback) {
     ([&] { // fold over the callback pack
-        if constexpr (requires { callback(detail::TargetArg<X&&>{}); }) {
-            using Target = callback_type_t<F, 1>;
-            if (!match<std::decay_t<Target>>(x))
-                return false;
-            // Forward when there is only one argument.
-            callback(convert<Target>(std::forward<X>(x)));
-            return true;
-        } else if constexpr (requires { callback(detail::TargetArg<X&>{}, x); }) {
-            using Target = callback_type_t<F, 1>;
-            if (!match<std::decay_t<Target>>(x))
-                return false;
-            // The same value cannot be forwarded to multiple arguments.
-            callback(convert<Target>(x), x);
-            return true;
-        } else if constexpr (requires { callback(x, detail::TargetArg<X&>{}); }) {
-            using Target = callback_type_t<F, 2>;
-            if (!match<std::decay_t<Target>>(x))
-                return false;
-            // The same value cannot be forwarded to multiple arguments.
-            callback(convert<Target>(x), x);
-            return true;
-        } else if constexpr (requires { callback(std::forward<X>(x)); }) {
+        if constexpr (requires { callback(std::forward<X>(x)); }) {
             // Forward when there is only one argument.
             callback(std::forward<X>(x));
+            return true;
+        } else if constexpr (requires { callback(detail::AnyArg{}); }) {
+            using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 1>>;
+            if (!ADL::match(x))
+                return false;
+            // Forward when there is only one argument.
+            callback(ADL::convert(std::forward<X>(x)));
+            return true;
+        } else if constexpr (requires { callback(detail::AnyArg{}, x); }) {
+            using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 1>>;
+            if (!ADL::match(x))
+                return false;
+            // The same value cannot be forwarded to multiple arguments.
+            callback(ADL::convert(x), x);
+            return true;
+        } else if constexpr (requires { callback(x, detail::AnyArg{}); }) {
+            using ADL = VisitADL<std::decay_t<X>, callback_type_t<F, 2>>;
+            if (!ADL::match(x))
+                return false;
+            // The same value cannot be forwarded to multiple arguments.
+            callback(x, ADL::convert(x));
             return true;
         } else {
             static_assert(

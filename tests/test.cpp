@@ -6,67 +6,49 @@
 #include <utility>
 #include <type_traits>
 
-using std::cout;
-using std::endl;
-
-#if __cplusplus >= 202002L
-template <typename X, typename T>
-concept DecaysTo = std::same_as<T, std::decay_t<X>>;
-
-template <typename T, DecaysTo<boost::any> X>
-bool match(X&& x) noexcept {
-    return x.type() == typeid(T);
-}
-
-template <typename T, DecaysTo<boost::any> X>
-T convert(X&& x) {
-    return boost::any_cast<T>(std::forward<X>(x));
-}
-
-#else
-
-template <typename X, typename T>
-constexpr bool decaysTo = std::is_same<T, std::decay_t<X>>::value;
-
-template <typename T, typename X>
-auto match(X&& x) noexcept -> std::enable_if_t<decaysTo<X, boost::any>, bool> {
-    return x.type() == typeid(T);
-}
-
-template <typename T, typename X>
-auto convert(X&& x) noexcept -> std::enable_if_t<decaysTo<X, boost::any>, T> {
-    return boost::any_cast<T>(std::forward<X>(x));
-}
-#endif
-
 #if __cplusplus >= 202002L
 #include "visit-cpp20.hpp"
 #else
 #include "visit-cpp14.hpp"
 #endif
 
-TEST(Visit_match) {
-    boost::any x(1);
-    TEST_TRUE(match<int>(x));
-    TEST_FALSE(match<unsigned>(x));
-}
+using std::cout;
+using std::endl;
 
-TEST(Visit_convert) {
-    TEST_EQ(convert<int>(boost::any(5)), 5);
-    TEST_EQ(convert<double>(boost::any(2.3)), 2.3);
-}
+template <typename To>
+struct VisitADL<boost::any, To> {
+    template <typename X>
+    static bool match(X&& x) noexcept {
+        return x.type() == typeid(To);
+    }
+
+    template <typename X>
+    static To convert(X&& x) noexcept {
+        return boost::any_cast<To>(std::forward<X>(x));
+    }
+};
 
 TEST(Visit_SingleValue) {
-    boost::any x(1);
-
-    Visit(x,
-        [](int x) {
+    bool called = false;
+    Visit(boost::any(1),
+        [&](int x) {
+            called = true;
             TEST_EQ(x, 1);
         },
         [](const boost::any&) {
             TEST_FAIL;
         }
     );
+    TEST_TRUE(called);
+
+    called = false;
+    Visit(boost::any(1),
+        [&](boost::any x) {
+            called = true;
+            TEST_EQ(boost::any_cast<int>(x), 1);
+        }
+    );
+    TEST_TRUE(called);
 }
 
 template <typename Xs, typename... F>
@@ -78,7 +60,7 @@ auto VisitEach(Xs&& xs, F&&... callback)
     }
 }
 
-TEST(visit_any) {
+TEST(visit_vector) {
     std::vector<boost::any> xs { 3, 2.5, 'D', 71, "Text" };
 
     int i = 0;

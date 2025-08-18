@@ -36,18 +36,18 @@ int main() {
 
 #define TEST_EQ(LHS, RHS) \
     if (!( (LHS) == (RHS) )) { \
-        throw std::runtime_error(STR(__LINE__) ": " #LHS " != " #RHS); \
+        throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #LHS " != " #RHS); \
     }
 
 #define TEST_TRUE(X) \
     if (!(X)) { \
-        throw std::runtime_error(STR(__LINE__) ": " #X " is false"); \
+        throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #X " is false"); \
     }
 
 #define TEST_FALSE(X) \
     if ((X)) { \
-        throw std::runtime_error(STR(__LINE__) ": " #X " is true"); \
+        throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #X " is true"); \
     }
 
 #define TEST_FAIL \
-      throw std::runtime_error(STR(__LINE__) ": test failed");
+      throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": test failed");
