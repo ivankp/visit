@@ -5,7 +5,7 @@
 
 namespace detail {
 
-template <typename>
+template <typename...>
 static constexpr bool false_v = false;
 
 struct AnyArg {
@@ -18,7 +18,7 @@ struct AnyArg {
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(
-        detail::false_v<From>,
+        detail::false_v<From, To>,
         "VisitADL is not specialized for these types"
     );
 };

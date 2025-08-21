@@ -28,15 +28,6 @@ struct VisitADL<boost::any, To> {
     }
 };
 
-template <typename Xs, typename... F>
-auto VisitEach(Xs&& xs, F&&... callback)
--> decltype((std::begin(xs) != std::end(xs)), void{})
-{
-    for (auto&& x : xs) {
-        Visit(x, callback...);
-    }
-}
-
 TEST(Visit_Single_ByConstRef) {
     bool called = false;
     Visit(boost::any(1),
@@ -138,6 +129,15 @@ TEST(Visit_AnyInsideAny) {
         }
     );
     TEST_TRUE(called);
+}
+
+template <typename Xs, typename... F>
+auto VisitEach(Xs&& xs, F&&... callback)
+-> decltype((std::begin(xs) != std::end(xs)), void{})
+{
+    for (auto&& x : xs) {
+        Visit(x, callback...);
+    }
 }
 
 TEST(visit_vector) {
