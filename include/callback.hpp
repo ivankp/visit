@@ -5,10 +5,12 @@
 
 namespace detail {
 
+// Creates a dependent false value usable in static_assert
 template <typename...>
 static constexpr bool false_v = false;
 
-template <std::size_t Index, typename T0, typename... T>
+// Get Nth type from a pack of types
+template <unsigned Index, typename T0, typename... T>
 struct NthType {
     using Type = typename NthType<Index - 1, T...>::Type;
 };
@@ -18,12 +20,13 @@ struct NthType<0, T0, T...> {
     using Type = T0;
 };
 
+// Wrapper for a pack of types
 template <typename... T>
 struct TypeTuple {
-    template <std::size_t Index>
+    template <unsigned Index>
     using Type = typename NthType<Index, T...>::Type;
 
-    static constexpr std::size_t size = sizeof...(T);
+    static constexpr unsigned size = sizeof...(T);
 };
 
 // These function declarations are SFINAE helpers for use in unevaluated contexts,
@@ -42,6 +45,8 @@ TypeTuple<R, Args...> callbackTypesHelper(R (F::*)(Args...) const);
 template <typename F>
 decltype(callbackTypesHelper(&F::operator())) callbackTypesHelper(F);
 
+// Wrap callback types deduction into a class template
+// to provide a descripting static_assert.
 template <typename F, typename = void>
 struct CallbackTypesTrait {
     static_assert(false_v<F>,
@@ -57,13 +62,13 @@ struct CallbackTypesTrait<F, decltype(callbackTypesHelper(std::declval<F>()), vo
 } // end namespace detail
 
 // return nth return or argument type of a callable
-template <typename F, std::size_t I>
+template <typename F, unsigned I>
 using CallbackType_t = typename detail::CallbackTypesTrait<F>::Types::Type<I>;
 
 // return nth return or argument type of a callable with std::decay applied
-template <typename F, std::size_t I>
+template <typename F, unsigned I>
 using DecayedCallbackType_t = typename std::decay<CallbackType_t<F, I>>::Type;
 
 // number of arguments of a callable
 template <typename F>
-constexpr std::size_t callbackNumArgs = detail::CallbackTypesTrait<F>::Types::size - 1;
+constexpr unsigned callbackNumArgs = detail::CallbackTypesTrait<F>::Types::size - 1;

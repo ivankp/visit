@@ -3,20 +3,10 @@
 #include <callback.hpp>
 #include <type_traits>
 
-namespace detail {
-
-struct AnyArg {
-    template <typename T>
-    operator T();
-};
-
-}
-
 template <typename From, typename To, typename = void>
 struct VisitADL {
-    static_assert(
-        detail::false_v<From, To>,
-        "VisitADL is not specialized for these types"
+    static_assert(detail::false_v<From, To>,
+        "VisitADL is not specialized for these types."
     );
 };
 
