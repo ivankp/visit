@@ -2,9 +2,9 @@
 
 #include <boost/any.hpp>
 
-#include <vector>
-#include <utility>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #if __cplusplus >= 202002L
 #include "visit-cpp20.hpp"
@@ -16,7 +16,7 @@ using std::cout;
 using std::endl;
 
 template <typename To>
-struct VisitADL<boost::any, To, std::enable_if_t<!std::is_same<boost::any, std::decay_t<To>>::value>> {
+struct VisitADL<boost::any, To> {
     template <typename X>
     static bool match(X&& x) noexcept {
         return x.type() == typeid(To);
@@ -27,6 +27,17 @@ struct VisitADL<boost::any, To, std::enable_if_t<!std::is_same<boost::any, std::
         return boost::any_cast<To>(std::forward<X>(x));
     }
 };
+
+// TEST(Visit_xxx) {
+//     bool called = false;
+//     Visit(boost::any(1),
+//         [&](int x, int) {
+//             called = true;
+//             TEST_EQ(x, 1);
+//         }
+//     );
+//     TEST_TRUE(called);
+// }
 
 TEST(Visit_Single) {
     bool called = false;
@@ -145,6 +156,7 @@ TEST(Visit_AnyInsideAny) {
 }
 */
 
+#if __cplusplus < 202002L
 template <typename Xs, typename... F>
 auto VisitEach(Xs&& xs, F&&... callback)
 -> decltype((std::begin(xs) != std::end(xs)), void{})
@@ -153,6 +165,7 @@ auto VisitEach(Xs&& xs, F&&... callback)
         Visit(x, callback...);
     }
 }
+#endif
 
 TEST(visit_vector) {
     std::vector<boost::any> xs { 3, 2.5, 'D', 71, "Text" };
