@@ -38,4 +38,4 @@ using decayed_callback_type_t = typename std::decay<callback_type_t<F, I>>::type
 
 // number of arguments of a callable
 template <typename F>
-constexpr bool callback_num_args = std::tuple_size<callback_types_t<F>>::value - 1;
+constexpr std::size_t callback_num_args = std::tuple_size<callback_types_t<F>>::value - 1;

@@ -28,16 +28,13 @@ struct VisitADL<boost::any, To> {
     }
 };
 
-// TEST(Visit_xxx) {
-//     bool called = false;
-//     Visit(boost::any(1),
-//         [&](int x, int) {
-//             called = true;
-//             TEST_EQ(x, 1);
-//         }
-//     );
-//     TEST_TRUE(called);
-// }
+TEST(Visit_xxx) {
+    Visit(boost::any(1),
+        +[](int x, int) {
+            TEST_EQ(x, 1);
+        }
+    );
+}
 
 TEST(Visit_Single) {
     bool called = false;

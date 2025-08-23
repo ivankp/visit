@@ -22,8 +22,7 @@ template <typename X, typename... F>
 bool Visit(X&& x, F&&... callback) {
     using DecayedX = std::decay_t<X>;
     return ([&] { // fold over the callback pack
-        using CallbackTypes = callback_types_t<F>;
-        static constexpr std::size_t numArgs = std::tuple_size_v<CallbackTypes> - 1;
+        static constexpr std::size_t numArgs = callback_num_args<F>;
         if constexpr (numArgs == 1) {
             using Arg = callback_type_t<F, 1>;
             if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg>>) {
