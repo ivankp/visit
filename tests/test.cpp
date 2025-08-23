@@ -28,7 +28,16 @@ struct VisitADL<boost::any, To> {
     }
 };
 
-// Should fail to compile due to static_assert
+// // Should fail to compile due to static_assert
+// // because callback doesn't have arguments
+// TEST(Visit_xxx) {
+//     Visit(boost::any(1),
+//         [&]() { }
+//     );
+// }
+
+// // Should fail to compile due to static_assert
+// // because callback has a template argument
 // TEST(Visit_xxx) {
 //     Visit(boost::any(1),
 //         [&](auto x) {

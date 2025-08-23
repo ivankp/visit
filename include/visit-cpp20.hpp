@@ -11,22 +11,22 @@ struct VisitADL {
     );
 };
 
-template <typename X, typename... F>
-bool Visit(X&& x, F&&... callback) {
-    using DecayedX = std::decay_t<X>;
+template <typename Visited, typename... F>
+bool Visit(Visited&& x, F&&... callback) {
+    using DecayedX = std::decay_t<Visited>;
     return ([&] { // fold over the callback pack
         static constexpr unsigned numArgs = callbackNumArgs<F>;
         if constexpr (numArgs == 1) {
             using Arg = CallbackType_t<F, 1>;
             if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg>>) {
                 // Forward when there is only one argument.
-                callback(std::forward<X>(x));
+                callback(std::forward<Visited>(x));
             } else {
                 using ADL = VisitADL<DecayedX, Arg>;
                 if (!ADL::match(x))
                     return false;
                 // Forward when there is only one argument.
-                callback(ADL::convert(std::forward<X>(x)));
+                callback(ADL::convert(std::forward<Visited>(x)));
             }
         } else if constexpr (numArgs == 2) {
             using Arg1 = CallbackType_t<F, 1>;
@@ -44,19 +44,23 @@ bool Visit(X&& x, F&&... callback) {
                 // The same value cannot be forwarded to multiple arguments.
                 callback(x, ADL::convert(x));
             } else {
-                static_assert(detail::false_v<X, Arg1, Arg2>,
+                static_assert(detail::false_v<Visited, Arg1, Arg2>,
                     "For a 2-argument callback, one of the arguments must match "
                     "the visited type."
                 );
             }
+        } else {
+            static_assert(detail::false_v<Visited>,
+                "Unexpected number of callback arguments."
+            );
         }
         return true;
     }() || ...);
 }
 
-template <std::ranges::range Xs, typename... F>
-auto VisitEach(Xs&& xs, F&&... callback)
-requires requires(std::ranges::range_value_t<Xs> x) {
+template <std::ranges::range VisitedRange, typename... F>
+auto VisitEach(VisitedRange&& xs, F&&... callback)
+requires requires(std::ranges::range_value_t<VisitedRange> x) {
     Visit(x, std::forward<F>(callback)...);
 }
 {
@@ -65,9 +69,9 @@ requires requires(std::ranges::range_value_t<Xs> x) {
     }
 }
 
-template <std::ranges::range Xs, typename... F>
-auto VisitEachPtr(Xs&& xs, F&&... callback)
-requires requires(std::ranges::range_value_t<Xs> x) {
+template <std::ranges::range VisitedRange, typename... F>
+auto VisitEachPtr(VisitedRange&& xs, F&&... callback)
+requires requires(std::ranges::range_value_t<VisitedRange> x) {
     Visit(*x, std::forward<F>(callback)...);
 }
 {
