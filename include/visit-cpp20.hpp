@@ -4,6 +4,13 @@
 #include <ranges>
 #include <type_traits>
 
+namespace detail {
+
+template <typename A, typename B>
+constexpr bool decayToSame = std::is_same_v<std::decay_t<A>, std::decay_t<B>>;
+
+}
+
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,
@@ -13,16 +20,15 @@ struct VisitADL {
 
 template <typename Visited, typename... F>
 bool Visit(Visited&& x, F&&... callback) {
-    using DecayedX = std::decay_t<Visited>;
     return ([&] { // fold over the callback pack
         static constexpr unsigned numArgs = callbackNumArgs<F>;
         if constexpr (numArgs == 1) {
             using Arg = CallbackType_t<F, 1>;
-            if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg>>) {
+            if constexpr (detail::decayToSame<Visited, Arg>) {
                 // Forward when there is only one argument.
                 callback(std::forward<Visited>(x));
             } else {
-                using ADL = VisitADL<DecayedX, Arg>;
+                using ADL = VisitADL<std::decay_t<Visited>, Arg>;
                 if (!ADL::match(x))
                     return false;
                 // Forward when there is only one argument.
@@ -31,14 +37,14 @@ bool Visit(Visited&& x, F&&... callback) {
         } else if constexpr (numArgs == 2) {
             using Arg1 = CallbackType_t<F, 1>;
             using Arg2 = CallbackType_t<F, 2>;
-            if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg2>>) {
-                using ADL = VisitADL<DecayedX, Arg1>;
+            if constexpr (detail::decayToSame<Visited, Arg2>) {
+                using ADL = VisitADL<std::decay_t<Visited>, Arg1>;
                 if (!ADL::match(x))
                     return false;
                 // The same value cannot be forwarded to multiple arguments.
                 callback(ADL::convert(x), x);
-            } else if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg1>>) {
-                using ADL = VisitADL<DecayedX, Arg2>;
+            } else if constexpr (detail::decayToSame<Visited, Arg1>) {
+                using ADL = VisitADL<std::decay_t<Visited>, Arg2>;
                 if (!ADL::match(x))
                     return false;
                 // The same value cannot be forwarded to multiple arguments.
@@ -55,7 +61,7 @@ bool Visit(Visited&& x, F&&... callback) {
             );
         }
         return true;
-    }() || ...);
+    }() || ...); // fold over the callback pack
 }
 
 template <std::ranges::range VisitedRange, typename... F>

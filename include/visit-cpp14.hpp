@@ -10,6 +10,11 @@ struct VisitADL {
     );
 };
 
+// TODO
+// Need to wrap Visit() implementations into a struct
+// to enable partial specialization.
+// May need multiple struct levels to account for number of arguments.
+
 template <typename X, typename F>
 auto Visit(X&& x, F&& callback)
 -> decltype(callback(std::forward<X>(x)), bool{})
