@@ -4,13 +4,6 @@
 #include <ranges>
 #include <type_traits>
 
-namespace detail {
-
-template <typename...>
-static constexpr bool false_v = false;
-
-}
-
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,

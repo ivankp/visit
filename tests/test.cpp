@@ -28,13 +28,13 @@ struct VisitADL<boost::any, To> {
     }
 };
 
-TEST(Visit_xxx) {
-    Visit(boost::any(1),
-        +[](int x, const boost::any&) {
-            TEST_EQ(x, 1);
-        }
-    );
-}
+// TEST(Visit_xxx) {
+//     Visit(boost::any(1),
+//         [&](auto x) {
+//             TEST_EQ(x, 1);
+//         }
+//     );
+// }
 
 TEST(Visit_Single) {
     bool called = false;
@@ -83,6 +83,17 @@ TEST(Visit_Single_ByValue) {
         [&](boost::any x) {
             called = true;
             TEST_EQ(boost::any_cast<int>(x), 1);
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(Visit_Single_Self) {
+    bool called = false;
+    Visit(boost::any(1.1),
+        [&](double x, const boost::any& any) {
+            called = true;
+            TEST_EQ(x, boost::any_cast<double>(any));
         }
     );
     TEST_TRUE(called);

@@ -5,9 +5,6 @@
 
 namespace detail {
 
-template <typename...>
-static constexpr bool false_v = false;
-
 struct AnyArg {
     template <typename T>
     operator T();
