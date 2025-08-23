@@ -35,3 +35,7 @@ using callback_type_t = typename std::tuple_element<I, callback_types_t<F>>::typ
 // return nth return or argument type of a callable with std::decay applied
 template <typename F, std::size_t I>
 using decayed_callback_type_t = typename std::decay<callback_type_t<F, I>>::type;
+
+// number of arguments of a callable
+template <typename F>
+constexpr bool callback_num_args = std::tuple_size<callback_types_t<F>>::value - 1;
