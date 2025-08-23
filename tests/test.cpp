@@ -30,7 +30,7 @@ struct VisitADL<boost::any, To> {
 
 TEST(Visit_xxx) {
     Visit(boost::any(1),
-        +[](int x, int) {
+        +[](int x, const boost::any&) {
             TEST_EQ(x, 1);
         }
     );

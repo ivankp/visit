@@ -39,13 +39,13 @@ bool Visit(X&& x, F&&... callback) {
             using Arg1 = callback_type_t<F, 1>;
             using Arg2 = callback_type_t<F, 2>;
             if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg2>>) {
-                using ADL = VisitADL<DecayedX, Arg2>;
+                using ADL = VisitADL<DecayedX, Arg1>;
                 if (!ADL::match(x))
                     return false;
                 // The same value cannot be forwarded to multiple arguments.
                 callback(ADL::convert(x), x);
             } else if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg1>>) {
-                using ADL = VisitADL<DecayedX, Arg1>;
+                using ADL = VisitADL<DecayedX, Arg2>;
                 if (!ADL::match(x))
                     return false;
                 // The same value cannot be forwarded to multiple arguments.
