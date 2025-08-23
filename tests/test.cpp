@@ -28,6 +28,7 @@ struct VisitADL<boost::any, To> {
     }
 };
 
+// Should fail to compile due to static_assert
 // TEST(Visit_xxx) {
 //     Visit(boost::any(1),
 //         [&](auto x) {

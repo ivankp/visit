@@ -15,9 +15,9 @@ template <typename X, typename... F>
 bool Visit(X&& x, F&&... callback) {
     using DecayedX = std::decay_t<X>;
     return ([&] { // fold over the callback pack
-        static constexpr std::size_t numArgs = callback_num_args<F>;
+        static constexpr std::size_t numArgs = callbackNumArgs<F>;
         if constexpr (numArgs == 1) {
-            using Arg = callback_type_t<F, 1>;
+            using Arg = CallbackType_t<F, 1>;
             if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg>>) {
                 // Forward when there is only one argument.
                 callback(std::forward<X>(x));
@@ -29,8 +29,8 @@ bool Visit(X&& x, F&&... callback) {
                 callback(ADL::convert(std::forward<X>(x)));
             }
         } else if constexpr (numArgs == 2) {
-            using Arg1 = callback_type_t<F, 1>;
-            using Arg2 = callback_type_t<F, 2>;
+            using Arg1 = CallbackType_t<F, 1>;
+            using Arg2 = CallbackType_t<F, 2>;
             if constexpr (std::is_same_v<DecayedX, std::decay_t<Arg2>>) {
                 using ADL = VisitADL<DecayedX, Arg1>;
                 if (!ADL::match(x))
