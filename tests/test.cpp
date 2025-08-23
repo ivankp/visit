@@ -6,14 +6,12 @@
 #include <utility>
 #include <vector>
 
+#ifndef TEST_DIRECT
 #if __cplusplus >= 202002L
 #include "visit-cpp20.hpp"
 #else
 #include "visit-cpp14.hpp"
 #endif
-
-using std::cout;
-using std::endl;
 
 template <typename To>
 struct VisitADL<boost::any, To> {
@@ -27,6 +25,71 @@ struct VisitADL<boost::any, To> {
         return boost::any_cast<To>(std::forward<X>(x));
     }
 };
+#else
+
+#include "callback.hpp"
+
+namespace detail {
+
+template <typename A, typename B>
+constexpr bool decayToSame = std::is_same_v<std::decay_t<A>, std::decay_t<B>>;
+
+}
+
+template <typename Visited, typename... F>
+requires std::is_same_v<std::decay_t<Visited>, boost::any>
+bool Visit(Visited&& x, F&&... callback) {
+    return ([&] { // fold over the callback pack
+        static constexpr unsigned numArgs = callbackNumArgs<F>;
+        if constexpr (numArgs == 1) {
+            using Arg = CallbackType_t<F, 1>;
+            if constexpr (detail::decayToSame<Visited, Arg>) {
+                // Forward when there is only one argument.
+                callback(std::forward<Visited>(x));
+            } else {
+                if (x.type() != typeid(Arg))
+                    return false;
+                // Forward when there is only one argument.
+                callback(boost::any_cast<Arg>(std::forward<Visited>(x)));
+            }
+        } else if constexpr (numArgs == 2) {
+            using Arg1 = CallbackType_t<F, 1>;
+            using Arg2 = CallbackType_t<F, 2>;
+            if constexpr (detail::decayToSame<Visited, Arg2>) {
+                if (x.type() != typeid(Arg1))
+                    return false;
+                // The same value cannot be forwarded to multiple arguments.
+                callback(boost::any_cast<Arg1>(x), x);
+            } else if constexpr (detail::decayToSame<Visited, Arg1>) {
+                if (x.type() != typeid(Arg2))
+                    return false;
+                // The same value cannot be forwarded to multiple arguments.
+                callback(x, boost::any_cast<Arg1>(x));
+            } else {
+                static_assert(detail::false_v<Visited, Arg1, Arg2>,
+                    "For a 2-argument callback, one of the arguments must match "
+                    "the visited type."
+                );
+            }
+        } else {
+            static_assert(detail::false_v<Visited>,
+                "Unexpected number of callback arguments."
+            );
+        }
+        return true;
+    }() || ...); // fold over the callback pack
+}
+
+template <typename VisitedRange, typename... F>
+auto VisitEach(VisitedRange&& xs, F&&... callback) {
+    for (auto&& x : xs) {
+        Visit(x, std::forward<F>(callback)...);
+    }
+}
+#endif
+
+using std::cout;
+using std::endl;
 
 // // Should fail to compile due to static_assert
 // // because callback doesn't have arguments
