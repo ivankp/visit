@@ -3,7 +3,7 @@
 
 #ifdef VISIT
 #include "visit-cpp20.hpp"
-#include <type_traits>
+// #include <type_traits>
 #endif
 
 #if defined(USE_IOSTREAM)
@@ -33,16 +33,16 @@ struct Derived : Base {
 #ifdef VISIT
 template <typename To>
 struct VisitADL<Base, To> {
-    using To_t = std::remove_cvref_t<To>;
+    // using To_t = std::remove_cvref_t<To>;
 
     template <typename X>
     static bool match(X&& x) noexcept {
-        return dynamic_cast<Derived<To_t>*>(&x);
+        return dynamic_cast<Derived<To>*>(&x);
     }
 
     template <typename X>
     static To convert(X&& x) noexcept {
-        return dynamic_cast<Derived<To_t>*>(&x)->value;
+        return dynamic_cast<Derived<To>*>(&x)->value;
     }
 };
 #endif
