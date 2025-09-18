@@ -46,11 +46,12 @@ template <typename F>
 decltype(callbackTypesHelper(&F::operator())) callbackTypesHelper(F);
 
 // Wrap callback types deduction into a class template
-// to provide a descripting static_assert.
+// to provide a descriptive static_assert.
 template <typename F, typename = void>
 struct CallbackTypesTrait {
     static_assert(false_v<F>,
-        "This callback must be neither a template nor an overloaded function."
+        "This callback must be callable with a unique list of arguments. "
+        "This may fail for templates and overloaded functions.
     );
 };
 
