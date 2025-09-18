@@ -1,0 +1,3 @@
+With    visit: 0.07231 ± 0.00080
+Without visit: 0.06442 ± 0.00071
+Difference   : 0.00789 ± 0.00107

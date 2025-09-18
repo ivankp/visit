@@ -51,7 +51,7 @@ template <typename F, typename = void>
 struct CallbackTypesTrait {
     static_assert(false_v<F>,
         "This callback must be callable with a unique list of arguments. "
-        "This may fail for templates and overloaded functions.
+        "This may fail for templates and overloaded functions."
     );
 };
 
