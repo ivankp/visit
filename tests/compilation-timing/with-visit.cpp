@@ -62,4 +62,8 @@ int main() {
 
     if (result != 4)
         return result;
+
+    delete c;
+    delete b;
+    delete a;
 }
