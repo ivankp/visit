@@ -5,43 +5,43 @@
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,
-        "VisitADL is not specialized for these types."
+        "VisitADL is not specialized for these types"
     );
 };
 
-template <typename Visited, typename F>
-bool Visit(Visited&& x, F&& callback) {
+template <typename From, typename F>
+bool Visit(From&& from, F&& callback) {
     using Args = typename detail::CallbackTypesTrait<F>::Types;
-    using decayedVisited = std::decay_t<Visited>;
+    using DecayedFrom = std::decay_t<From>;
     if constexpr (Args::size == 2) {
         using Arg = typename Args::Type<1>;
-        if constexpr (std::is_same_v<decayedVisited, std::decay_t<Arg>>) {
+        if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
             // Forward when there is only one argument.
-            callback(static_cast<Visited&&>(x));
+            callback(static_cast<From&&>(from));
         } else {
-            using ADL = VisitADL<decayedVisited, Arg>;
-            if (!ADL::match(x))
+            using ADL = VisitADL<DecayedFrom, Arg>;
+            if (!ADL::match(from))
                 return false;
             // Forward when there is only one argument.
-            callback(ADL::convert(static_cast<Visited&&>(x)));
+            callback(ADL::convert(static_cast<From&&>(from)));
         }
     } else if constexpr (Args::size == 3) {
         using Arg1 = typename Args::Type<1>;
         using Arg2 = typename Args::Type<2>;
-        if constexpr (std::is_same_v<decayedVisited, std::decay_t<Arg2>>) {
-            using ADL = VisitADL<decayedVisited, Arg1>;
-            if (!ADL::match(x))
+        if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
+            using ADL = VisitADL<DecayedFrom, Arg1>;
+            if (!ADL::match(from))
                 return false;
             // The same value cannot be forwarded to multiple arguments.
-            callback(ADL::convert(x), x);
-        } else if constexpr (std::is_same_v<decayedVisited, std::decay_t<Arg1>>) {
-            using ADL = VisitADL<decayedVisited, Arg2>;
-            if (!ADL::match(x))
+            callback(ADL::convert(from), from);
+        } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
+            using ADL = VisitADL<DecayedFrom, Arg2>;
+            if (!ADL::match(from))
                 return false;
             // The same value cannot be forwarded to multiple arguments.
-            callback(x, ADL::convert(x));
+            callback(from, ADL::convert(from));
         } else {
-            static_assert(detail::false_v<Visited, Arg1, Arg2>,
+            static_assert(detail::false_v<From, Arg1, Arg2>,
                 "For a 2-argument callback, one of the arguments must match "
                 "the visited type."
             );
@@ -54,10 +54,10 @@ bool Visit(Visited&& x, F&& callback) {
     return true;
 }
 
-template <typename Visited, typename... F>
-bool Visit(Visited&& x, F&&... callback) {
+template <typename From, typename... F>
+bool Visit(From&& from, F&&... callback) {
     return (Visit(
-        static_cast<Visited&&>(x),
+        static_cast<From&&>(from),
         static_cast<F&&>(callback)
     ) || ...); // fold over the callback pack
 }
