@@ -1,6 +1,5 @@
 #pragma once
 
-#include <type_traits>
 #include <utility>
 
 namespace detail {
@@ -48,7 +47,7 @@ decltype(callbackTypesHelper(&F::operator())) callbackTypesHelper(F);
 // Wrap callback types deduction into a class template
 // to provide a descriptive static_assert.
 template <typename F, typename = void>
-struct CallbackTypesTrait {
+struct CallbackTypes {
     static_assert(false_v<F>,
         "This callback must be callable with a unique list of arguments. "
         "This may fail for templates and overloaded functions."
@@ -59,22 +58,11 @@ struct CallbackTypesTrait {
 // TODO: avoid dependence on std::declval -> wouldn't need <utility>
 
 template <typename F>
-struct CallbackTypesTrait<F, decltype(callbackTypesHelper(std::declval<F>()), void())> {
+struct CallbackTypes<F, decltype(callbackTypesHelper(std::declval<F>()), void())> {
     using Types = decltype(callbackTypesHelper(std::declval<F>()));
 };
 
 } // end namespace detail
 
-// TODO: won't need <type_traits> without these
-
-// return nth return or argument type of a callable
-template <typename F, unsigned I>
-using CallbackType_t = typename detail::CallbackTypesTrait<F>::Types::Type<I>;
-
-// return nth return or argument type of a callable with std::decay applied
-template <typename F, unsigned I>
-using DecayedCallbackType_t = typename std::decay<CallbackType_t<F, I>>::Type;
-
-// number of arguments of a callable
 template <typename F>
-constexpr unsigned callbackNumArgs = detail::CallbackTypesTrait<F>::Types::size - 1;
+using CallbackTypes_t = typename detail::CallbackTypes<F>::Types;

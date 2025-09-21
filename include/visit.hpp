@@ -1,6 +1,7 @@
 #pragma once
 
 #include <callback.hpp>
+#include <type_traits>
 
 template <typename From, typename To, typename = void>
 struct VisitADL {
@@ -11,10 +12,10 @@ struct VisitADL {
 
 template <typename From, typename F>
 bool Visit(From&& from, F&& callback) {
-    using Args = typename detail::CallbackTypesTrait<F>::Types;
+    using CallbackTypes = CallbackTypes_t<F>;
     using DecayedFrom = std::decay_t<From>;
-    if constexpr (Args::size == 2) {
-        using Arg = typename Args::Type<1>;
+    if constexpr (CallbackTypes::size == 2) {
+        using Arg = typename CallbackTypes::Type<1>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
             // Forward when there is only one argument.
             callback(static_cast<From&&>(from));
@@ -25,9 +26,9 @@ bool Visit(From&& from, F&& callback) {
             // Forward when there is only one argument.
             callback(ADL::convert(static_cast<From&&>(from)));
         }
-    } else if constexpr (Args::size == 3) {
-        using Arg1 = typename Args::Type<1>;
-        using Arg2 = typename Args::Type<2>;
+    } else if constexpr (CallbackTypes::size == 3) {
+        using Arg1 = typename CallbackTypes::Type<1>;
+        using Arg2 = typename CallbackTypes::Type<2>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
             if (!ADL::match(from))

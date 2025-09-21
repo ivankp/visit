@@ -6,7 +6,7 @@ TESTS := $(EXAMPLES:../examples/%.hpp=tests-%)
 all: $(TESTS)
 	@for tests in $^; do echo $$tests; ./$$tests; done
 
-$(TESTS): tests-%: tests.cpp test.hpp ../examples/%.hpp
+$(TESTS): tests-%: tests.cpp test.hpp ../examples/%.hpp ../include/visit.hpp ../include/callback.hpp
 	g++ -std=c++17 -Wall -Wextra -Werror -pedantic -O3 -DEXAMPLE=$* -I. -I../include $< -o $@
 
 clean:
