@@ -1,15 +1,13 @@
 .PHONY: all clean
 
-SRC := $(wildcard test-*.cpp)
-EXE := $(SRC:.cpp=)
+EXAMPLES := $(wildcard ../examples/*.hpp)
+TESTS := $(EXAMPLES:../examples/%.hpp=tests-%)
 
-all: $(EXE)
-	@for x in $^; do echo $$x; ./$$x; done
+all: $(TESTS)
+	@for tests in $^; do echo $$tests; ./$$tests; done
 
-$(EXE): %: %.cpp test.hpp
-	g++ -std=c++17 -Wall -Wextra -Werror -pedantic -O3 -I. -I../include $< -o $@
-
-test-inheritance: visit-inheritance.hpp
+$(TESTS): tests-%: tests.cpp test.hpp ../examples/%.hpp
+	g++ -std=c++17 -Wall -Wextra -Werror -pedantic -O3 -DEXAMPLE=$* -I. -I../include $< -o $@
 
 clean:
-	@rm -fv $(EXE)
+	@rm -fv $(TESTS)

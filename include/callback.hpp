@@ -55,12 +55,17 @@ struct CallbackTypesTrait {
     );
 };
 
+// TODO: can this indirection be avoided?
+// TODO: avoid dependence on std::declval -> wouldn't need <utility>
+
 template <typename F>
 struct CallbackTypesTrait<F, decltype(callbackTypesHelper(std::declval<F>()), void())> {
     using Types = decltype(callbackTypesHelper(std::declval<F>()));
 };
 
 } // end namespace detail
+
+// TODO: won't need <type_traits> without these
 
 // return nth return or argument type of a callable
 template <typename F, unsigned I>
