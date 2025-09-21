@@ -137,7 +137,7 @@ TEST(ConstByConstRef) {
 
 // -----------------------------------------------------------------------------
 
-TEST(TwoVisitorsFirst) {
+TEST(ThreeCallbacksFirst) {
 #if INHERITANCE
     const Base& x = Derived<int>(113);
 #elif STD_ANY
@@ -152,6 +152,9 @@ TEST(TwoVisitorsFirst) {
             called = true;
             TEST_EQ(x, 113);
         },
+        [&](const int*) {
+            TEST_FAIL;
+        },
         [&](float) {
             TEST_FAIL;
         }
@@ -159,7 +162,7 @@ TEST(TwoVisitorsFirst) {
     TEST_TRUE(called);
 }
 
-TEST(TwoVisitorsSecond) {
+TEST(ThreeCallbacksSecond) {
 #if INHERITANCE
     const Base& x = Derived<int>(113);
 #elif STD_ANY
@@ -170,6 +173,34 @@ TEST(TwoVisitorsSecond) {
 
     bool called = false;
     Visit(x,
+        [&](const int*) {
+            TEST_FAIL;
+        },
+        [&](int x) {
+            called = true;
+            TEST_EQ(x, 113);
+        },
+        [&](float) {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(ThreeCallbacksThird) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+        [&](const int*) {
+            TEST_FAIL;
+        },
         [&](float) {
             TEST_FAIL;
         },
@@ -353,6 +384,36 @@ TEST(TwoArgs3) {
         {
             called = true;
             TEST_EQ(x, 113);
+        }
+    );
+    TEST_TRUE(called);
+}
+
+// -----------------------------------------------------------------------------
+
+TEST(FromAfterBadTo) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+        [&](const int*) {
+            TEST_FAIL;
+        },
+#if INHERITANCE
+        [&](const Base&)
+#elif STD_ANY
+        [&](const std::any&)
+#elif BOOST_ANY
+        [&](const boost::any&)
+#endif
+        {
+            called = true;
         }
     );
     TEST_TRUE(called);
