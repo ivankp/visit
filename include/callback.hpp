@@ -33,23 +33,23 @@ struct TypeTuple {
 // They are used to determine the return and argument types of a callable.
 
 template <typename R, typename... Args>
-TypeTuple<R, Args...> callbackTypesHelper(R (*)(Args...));
+TypeTuple<R, Args...> callableTypesHelper(R (*)(Args...));
 
 template <typename F, typename R, typename... Args>
-TypeTuple<R, Args...> callbackTypesHelper(R (F::*)(Args...));
+TypeTuple<R, Args...> callableTypesHelper(R (F::*)(Args...));
 
 template <typename F, typename R, typename... Args>
-TypeTuple<R, Args...> callbackTypesHelper(R (F::*)(Args...) const);
+TypeTuple<R, Args...> callableTypesHelper(R (F::*)(Args...) const);
 
 template <typename F>
-decltype(callbackTypesHelper(&F::operator())) callbackTypesHelper(F);
+decltype(callableTypesHelper(&F::operator())) callableTypesHelper(F);
 
-// Wrap callback types deduction into a class template
+// Wrap callable types deduction into a class template
 // to provide a descriptive static_assert.
 template <typename F, typename = void>
-struct CallbackTypes {
+struct CallableTypes {
     static_assert(false_v<F>,
-        "This callback must be callable with a unique list of arguments. "
+        "This callable must have a unique list of arguments. "
         "This may fail for templates and overloaded functions."
     );
 };
@@ -58,11 +58,11 @@ struct CallbackTypes {
 // TODO: avoid dependence on std::declval -> wouldn't need <utility>
 
 template <typename F>
-struct CallbackTypes<F, decltype(callbackTypesHelper(std::declval<F>()), void())> {
-    using Types = decltype(callbackTypesHelper(std::declval<F>()));
+struct CallableTypes<F, decltype(callableTypesHelper(std::declval<F>()), void())> {
+    using Types = decltype(callableTypesHelper(std::declval<F>()));
 };
 
 } // end namespace detail
 
 template <typename F>
-using CallbackTypes_t = typename detail::CallbackTypes<F>::Types;
+using CallableTypes_t = typename detail::CallableTypes<F>::Types;
