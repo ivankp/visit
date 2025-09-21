@@ -146,19 +146,17 @@ TEST(TwoVisitorsFirst) {
     const boost::any x(113);
 #endif
 
-    bool called_int = false;
-    bool called_float = false;
+    bool called = false;
     Visit(x,
         [&](int x) {
-            called_int = true;
+            called = true;
             TEST_EQ(x, 113);
         },
         [&](float) {
-            called_float = true;
+            TEST_FAIL;
         }
     );
-    TEST_TRUE(called_int);
-    TEST_FALSE(called_float);
+    TEST_TRUE(called);
 }
 
 TEST(TwoVisitorsSecond) {
@@ -170,17 +168,192 @@ TEST(TwoVisitorsSecond) {
     const boost::any x(113);
 #endif
 
-    bool called_int = false;
-    bool called_float = false;
+    bool called = false;
     Visit(x,
         [&](float) {
-            called_float = true;
+            TEST_FAIL;
         },
         [&](int x) {
-            called_int = true;
+            called = true;
             TEST_EQ(x, 113);
         }
     );
-    TEST_TRUE(called_int);
-    TEST_FALSE(called_float);
+    TEST_TRUE(called);
+}
+
+// -----------------------------------------------------------------------------
+
+TEST(FromArg) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+#if INHERITANCE
+        [&](const Base&)
+#elif STD_ANY
+        [&](const std::any&)
+#elif BOOST_ANY
+        [&](const boost::any&)
+#endif
+        {
+            called = true;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(FromArgBeforeToArg) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+#if INHERITANCE
+        [&](const Base&)
+#elif STD_ANY
+        [&](const std::any&)
+#elif BOOST_ANY
+        [&](const boost::any&)
+#endif
+        {
+            called = true;
+        },
+        [&](int) {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(FromArgAfterToArg) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+        [&](int) {
+            called = true;
+        },
+#if INHERITANCE
+        [&](const Base&)
+#elif STD_ANY
+        [&](const std::any&)
+#elif BOOST_ANY
+        [&](const boost::any&)
+#endif
+        {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(TwoArgs1) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+        [&](float) {
+            TEST_FAIL;
+        },
+#if INHERITANCE
+        [&](int x, const Base&)
+#elif STD_ANY
+        [&](int x, const std::any&)
+#elif BOOST_ANY
+        [&](int x, const boost::any&)
+#endif
+        {
+            called = true;
+            TEST_EQ(x, 113);
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(TwoArgs2) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+#if INHERITANCE
+        [&](const Base&, int x)
+#elif STD_ANY
+        [&](const std::any&, int x)
+#elif BOOST_ANY
+        [&](const boost::any&, int x)
+#endif
+        {
+            called = true;
+            TEST_EQ(x, 113);
+        },
+        [&](float) {
+            TEST_FAIL;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(TwoArgs3) {
+#if INHERITANCE
+    const Base& x = Derived<int>(113);
+#elif STD_ANY
+    const std::any x(113);
+#elif BOOST_ANY
+    const boost::any x(113);
+#endif
+
+    bool called = false;
+    Visit(x,
+#if INHERITANCE
+        [&](float, const Base&)
+#elif STD_ANY
+        [&](float, const std::any&)
+#elif BOOST_ANY
+        [&](float, const boost::any&)
+#endif
+        {
+            TEST_FAIL;
+        },
+#if INHERITANCE
+        [&](int x, const Base&)
+#elif STD_ANY
+        [&](int x, const std::any&)
+#elif BOOST_ANY
+        [&](int x, const boost::any&)
+#endif
+        {
+            called = true;
+            TEST_EQ(x, 113);
+        }
+    );
+    TEST_TRUE(called);
 }
