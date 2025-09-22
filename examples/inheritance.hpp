@@ -30,23 +30,20 @@ template <typename T>
 struct VisitADL<Base, T> {
 private:
     template <typename From>
-    static auto* cast(From&& from) noexcept {
+    static auto* cast(From* from) noexcept {
         return dynamic_cast<
-            const_like_t<
-                Derived<std::decay_t<T>>,
-                std::remove_reference_t<From>
-            >*
-        >(&from);
+            const_like_t<Derived<std::decay_t<T>>, From>*
+        >(from);
     }
 
 public:
     template <typename From>
     static bool match(From&& from) noexcept {
-        return cast(std::forward<From>(from));
+        return cast(&from);
     }
 
     template <typename From>
     static T convert(From&& from) noexcept {
-        return cast(std::forward<From>(from))->value;
+        return cast(&from)->value;
     }
 };

@@ -418,3 +418,81 @@ TEST(FromAfterBadTo) {
     );
     TEST_TRUE(called);
 }
+
+// Order of preference ---------------------------------------------------------
+
+#if INHERITANCE
+
+// Need to specialize to avoid decaying the Derived<> parameter
+template <>
+struct VisitADL<Base, const Base&> {
+private:
+    template <typename From>
+    static auto* cast(From* from) noexcept {
+        return dynamic_cast<
+            const_like_t<Derived<const Base&>, From>*
+        >(from);
+    }
+
+public:
+    template <typename From>
+    static bool match(From&& from) noexcept {
+        return cast(&from);
+    }
+
+    template <typename From>
+    static const Base& convert(From&& from) noexcept {
+        return cast(&from)->value;
+    }
+};
+
+TEST(PreferFromArgSingle) {
+    // Test that a non-converting *from* arg takes precedence over
+    // a converting *to* arg.
+
+    const Base& a = Derived<int>(113);
+    const Base& b = Derived<const Base&>(a);
+
+    bool called = false;
+    Visit(b,
+        [&](const Base& from) {
+            if (!dynamic_cast<const Derived<const Base&>*>(&from)) {
+                TEST_FAIL;
+            }
+            if (dynamic_cast<const Derived<int>*>(&from)) {
+                TEST_FAIL;
+            }
+            called = true;
+        }
+    );
+    TEST_TRUE(called);
+}
+
+TEST(PreferFromArgRight) {
+    // Test that a non-converting *from* arg on the right takes precedence over
+    // the same on the left.
+
+    const Base& a = Derived<int>(113);
+    const Base& b = Derived<const Base&>(a);
+
+    bool called = false;
+    Visit(b,
+        [&](const Base& to, const Base& from) {
+            if (!dynamic_cast<const Derived<int>*>(&to)) {
+                TEST_FAIL;
+            }
+            if (!dynamic_cast<const Derived<const Base&>*>(&from)) {
+                TEST_FAIL;
+            }
+            if (dynamic_cast<const Derived<int>*>(&from)) {
+                TEST_FAIL;
+            }
+            if (dynamic_cast<const Derived<const Base&>*>(&to)) {
+                TEST_FAIL;
+            }
+            called = true;
+        }
+    );
+    TEST_TRUE(called);
+}
+#endif
