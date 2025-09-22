@@ -26,13 +26,13 @@ struct Derived : Base {
     Derived(Args&&... args): value(std::forward<Args>(args)...) { }
 };
 
-template <typename T>
-struct VisitADL<Base, T> {
+template <typename To>
+struct VisitADL<Base, To> {
 private:
     template <typename From>
     static auto* cast(From* from) noexcept {
         return dynamic_cast<
-            const_like_t<Derived<std::decay_t<T>>, From>*
+            const_like_t<Derived<std::decay_t<To>>, From>*
         >(from);
     }
 
@@ -43,7 +43,7 @@ public:
     }
 
     template <typename From>
-    static T convert(From&& from) noexcept {
-        return cast(&from)->value;
+    static To convert(From&& from) noexcept {
+        return static_cast<To>(cast(&from)->value);
     }
 };

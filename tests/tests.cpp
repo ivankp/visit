@@ -496,3 +496,39 @@ TEST(PreferFromArgRight) {
     TEST_TRUE(called);
 }
 #endif
+
+// -----------------------------------------------------------------------------
+
+#include <vector>
+
+TEST(Move) {
+    std::vector<int> vec { 1,2,3,4,5 };
+
+#if INHERITANCE
+    Base&& x = Derived<std::vector<int>>(std::move(vec));
+#elif STD_ANY
+    std::any x(std::move(vec));
+#elif BOOST_ANY
+    boost::any x(std::move(vec));
+#endif
+
+    TEST_TRUE(vec.empty());
+
+    bool called = false;
+    Visit(std::move(x),
+        [&](std::vector<int>&& x) {
+            called = true;
+            vec = std::move(x);
+        }
+    );
+    TEST_TRUE(called);
+    TEST_EQ(vec.size(), 5);
+
+#if INHERITANCE
+    TEST_TRUE(static_cast<Derived<std::vector<int>>&>(x).value.empty());
+#elif STD_ANY
+    TEST_TRUE(std::any_cast<const std::vector<int>&>(x).empty());
+#elif BOOST_ANY
+    TEST_TRUE(boost::any_cast<const std::vector<int>&>(x).empty());
+#endif
+}
