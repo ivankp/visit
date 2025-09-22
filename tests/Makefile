@@ -1,10 +1,10 @@
-.PHONY: all clean
-
 EXAMPLES := $(wildcard ../examples/*.hpp)
 TESTS := $(EXAMPLES:../examples/%.hpp=tests-%)
 
-all: $(TESTS)
-	@for tests in $^; do echo $$tests; ./$$tests; done
+.PHONY: all clean $(FAILURES)
+
+all: $(TESTS) failure/test.sh
+	@for tests in $^; do printf "\n$$tests\n"; ./$$tests; done
 
 $(TESTS): tests-%: tests.cpp test.hpp ../examples/%.hpp ../include/visit.hpp ../include/callback.hpp
 	g++ -std=c++17 -Wall -Wextra -Werror -pedantic -O3 -DEXAMPLE=$* -I. -I../include $< -o $@

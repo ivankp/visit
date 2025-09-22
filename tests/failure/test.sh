@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
+
 for cpp in *.cpp; do
     [[ $cpp == _* ]] && continue
     echo "${cpp%.cpp}"
