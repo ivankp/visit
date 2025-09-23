@@ -3,6 +3,19 @@
 #include <callable.hpp>
 #include <type_traits>
 
+namespace detail {
+
+struct identity {
+    template <typename T>
+    [[nodiscard]] constexpr T&& operator()(T&& x) const noexcept {
+        return static_cast<T&&>(x);
+    }
+
+    using is_transparent = void;
+};
+
+}
+
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,
@@ -61,26 +74,12 @@ auto Visit(From&& from, F&&... callback)
     ) || ...); // fold over the callback pack
 }
 
-/*
-template <std::ranges::range VisitedRange, typename... F>
-auto VisitEach(VisitedRange&& xs, F&&... callback)
-requires requires(std::ranges::range_value_t<VisitedRange> x) {
-    Visit(x, static_cast<F&&>(callback)...);
-}
-{
-    for (auto&& x : xs) {
-        Visit(x, static_cast<F&&>(callback)...);
+template <typename Container, typename Proj = detail::identity, typename... F>
+void VisitEach(Container&& container, Proj proj, F&&... callback) {
+    for (auto&& from : container) {
+        Visit(proj(from), static_cast<F&&>(callback)...);
     }
+    // This function could, in principle, be implemented using
+    // std::invoke(proj, from).
+    // But this would require including <functional>.
 }
-
-template <std::ranges::range VisitedRange, typename... F>
-auto VisitEachPtr(VisitedRange&& xs, F&&... callback)
-requires requires(std::ranges::range_value_t<VisitedRange> x) {
-    Visit(*x, static_cast<F&&>(callback)...);
-}
-{
-    for (auto&& x : xs) {
-        Visit(*x, static_cast<F&&>(callback)...);
-    }
-}
-*/

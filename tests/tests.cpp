@@ -532,3 +532,107 @@ TEST(Move) {
     TEST_TRUE(boost::any_cast<const std::vector<int>&>(x).empty());
 #endif
 }
+
+// -----------------------------------------------------------------------------
+
+#include <string_view>
+
+#if !(INHERITANCE)
+
+TEST(VisitEach) {
+    const std::vector<
+#if STD_ANY
+        std::any
+#elif BOOST_ANY
+        boost::any
+#endif
+    > many { 1, 2.f, 3., 'a', "text" };
+
+    int i = 0;
+    int called[5] { };
+
+    VisitEach(many, {},
+        [&](double x) {
+            called[2] = i++;
+            TEST_EQ(x, 3.);
+        },
+        [&](float x) {
+            called[1] = i++;
+            TEST_EQ(x, 2.f);
+        },
+        [&](int x) {
+            called[0] = i++;
+            TEST_EQ(x, 1);
+        },
+        [&](char x) {
+            called[3] = i++;
+            TEST_EQ(x, 'a');
+        },
+        [&](std::string_view) {
+            TEST_FAIL;
+        },
+        [&](const char* x) {
+            called[4] = i++;
+            TEST_EQ(std::string_view(x), "text");
+        }
+    );
+    TEST_EQ(i, 5);
+    TEST_EQ(called[0], 0);
+    TEST_EQ(called[1], 1);
+    TEST_EQ(called[2], 2);
+    TEST_EQ(called[3], 3);
+    TEST_EQ(called[4], 4);
+}
+
+TEST(VisitEachProj) {
+    const std::vector<std::pair<
+        const char*,
+#if STD_ANY
+        std::any
+#elif BOOST_ANY
+        boost::any
+#endif
+    >> many {
+        { "int"   , 1      },
+        { "float" , 2.f    },
+        { "double", 3.     },
+        { "char"  , 'a'    },
+        { "string", "text" }
+    };
+
+    int i = 0;
+    int called[5] { };
+
+    VisitEach(many, [](const auto& x) -> const auto& { return x.second; },
+        [&](double x) {
+            called[2] = i++;
+            TEST_EQ(x, 3.);
+        },
+        [&](float x) {
+            called[1] = i++;
+            TEST_EQ(x, 2.f);
+        },
+        [&](int x) {
+            called[0] = i++;
+            TEST_EQ(x, 1);
+        },
+        [&](char x) {
+            called[3] = i++;
+            TEST_EQ(x, 'a');
+        },
+        [&](std::string_view) {
+            TEST_FAIL;
+        },
+        [&](const char* x) {
+            called[4] = i++;
+            TEST_EQ(std::string_view(x), "text");
+        }
+    );
+    TEST_EQ(i, 5);
+    TEST_EQ(called[0], 0);
+    TEST_EQ(called[1], 1);
+    TEST_EQ(called[2], 2);
+    TEST_EQ(called[3], 3);
+    TEST_EQ(called[4], 4);
+}
+#endif
