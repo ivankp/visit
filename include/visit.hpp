@@ -19,7 +19,7 @@ struct identity {
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,
-        "VisitADL is not specialized for these types"
+        "VisitADL is not specialized for these types."
     );
 };
 
@@ -58,7 +58,7 @@ bool Visit(From&& from, F&& callback) {
         }
     } else {
         static_assert(detail::false_v<F>,
-            "Unexpected number of callback arguments."
+            "Visit callbacks must have either 1 or 2 arguments."
         );
     }
     return true;

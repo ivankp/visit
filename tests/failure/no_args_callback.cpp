@@ -1,4 +1,4 @@
-// static assertion failed: Unexpected number of callback arguments.
+// static assertion failed: Visit callbacks must have either 1 or 2 arguments.
 
 #include "examples/inheritance.hpp"
 
