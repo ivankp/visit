@@ -65,9 +65,10 @@ bool Visit(From&& from, F&& callback) {
 }
 
 template <typename From, typename... F>
-auto Visit(From&& from, F&&... callback)
--> std::enable_if_t<(sizeof...(F) > 1), bool>
-{
+auto Visit(From&& from, F&&... callback) {
+    static_assert(sizeof...(callback) > 0,
+        "Visit() must be called with at least 1 callback argument."
+    );
     return (Visit(
         static_cast<From&&>(from),
         static_cast<F&&>(callback)
