@@ -1,12 +1,80 @@
-# Goal
-
-The library implements type-based pattern matching for visiting objects
+# Overview
+The Visit library implements type-based pattern matching for visiting objects
 contained in type-erased wrappers such as `std::any`.
 
-# Usage
+## Benefits
+* Improved type safety with type matching.
+  * Stringly typed lookups can be converted to type-checked visits.
+* Reduced amount of boilerplate code.
+  * Write matching code only once rather than at every usage place.
+  * `VisitEach()` wraps iteration over containers.
+* Terse usage syntax.
+* Specializing a simple template provides consistent and rich behavior.
 
+## Integration
 Copy two header files,
 [callable.hpp](include/callable.hpp) and [visit.hpp](include/visit.hpp)
 into your project.
 
-[callable.hpp](include/callable.hpp) can be used independently.
+[callable.hpp](include/callable.hpp) can be used independently
+for type traits that can retrieve return and argument types of callables.
+
+# Example
+An archetypal example of a class that can be used with the Visit library is
+[`std::any`](https://en.cppreference.com/w/cpp/utility/any.html).
+
+To anable visiting a type, one needs to specialize the `struct VisitADL` template.
+```c++
+#include "visit.hpp"
+#include <any>
+
+template <typename To>
+struct VisitADL<std::any, To> {
+    template <typename From>
+    static bool match(From&& from) {
+        return from.type() == typeid(To);
+    }
+
+    template <typename From>
+    static To convert(From&& from) {
+        return std::any_cast<To>(std::forward<From>(from));
+    }
+};
+```
+`From` designates the type being visited,
+and `To` designates the type to which the `from` value will be converted.
+
+With the overload in place, an `std::any` can be visited as follows:
+```c++
+std::any value(5);
+Visit(value,
+    [](int x) {
+        std::cout << x << std::endl;
+    }
+);
+```
+Containers are also supported.
+```c++
+std::vector<std::any> values(5, 1.2, 'a', std::string("text"));
+VisitEach(values,
+    [](int i) {
+        std::cout << "int " << i << std::endl;
+    },
+    [](double d) {
+        std::cout << "double " << d << std::endl;
+    },
+    [](char c) {
+        std::cout << "char " << c << std::endl;
+    },
+    [](const std::string& s) {
+        std::cout << "string " << s << std::endl;
+    }
+);
+```
+The first callback for which the argument type matches the type of the wrapped object
+is the one that is called in each case.
+
+# Documentation
+## Visitor callback signatures
+
+## Moving and forwarding
