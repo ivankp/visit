@@ -47,3 +47,5 @@ public:
         return static_cast<To>(cast(&from)->value);
     }
 };
+
+#define EXAMPLE_INHERITANCE

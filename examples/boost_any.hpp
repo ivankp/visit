@@ -13,3 +13,5 @@ struct VisitADL<boost::any, To> {
         return boost::any_cast<To>(std::forward<From>(from));
     }
 };
+
+#define EXAMPLE_BOOST_ANY

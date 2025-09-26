@@ -1,24 +1,12 @@
 #include "test.hpp"
 #include STR(../examples/EXAMPLE.hpp)
 
-#define CAT1(A, B) A##B
-#define CAT(A, B) CAT1(A, B)
-
-#define I_inheritance 1
-#define INHERITANCE CAT(I_, EXAMPLE) == I_inheritance
-
-#define I_std_any 2
-#define STD_ANY CAT(I_, EXAMPLE) == I_std_any
-
-#define I_boost_any 3
-#define BOOST_ANY CAT(I_, EXAMPLE) == I_boost_any
-
 TEST(MutableByValue) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     boost::any x(113);
 #endif
 
@@ -33,11 +21,11 @@ TEST(MutableByValue) {
 }
 
 TEST(WrongType) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     boost::any x(113);
 #endif
 
@@ -51,11 +39,11 @@ TEST(WrongType) {
 }
 
 TEST(ConstByValue) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -70,11 +58,11 @@ TEST(ConstByValue) {
 }
 
 TEST(MutableByRef) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     boost::any x(113);
 #endif
 
@@ -88,21 +76,21 @@ TEST(MutableByRef) {
     );
     TEST_TRUE(called);
 
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     TEST_EQ(static_cast<Derived<int>&>(x).value, 17);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     TEST_EQ(std::any_cast<int>(x), 17);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     TEST_EQ(boost::any_cast<int>(x), 17);
 #endif
 }
 
 TEST(MutableByConstRef) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     boost::any x(113);
 #endif
 
@@ -117,11 +105,11 @@ TEST(MutableByConstRef) {
 }
 
 TEST(ConstByConstRef) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -138,11 +126,11 @@ TEST(ConstByConstRef) {
 // -----------------------------------------------------------------------------
 
 TEST(ThreeCallbacksFirst) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -163,11 +151,11 @@ TEST(ThreeCallbacksFirst) {
 }
 
 TEST(ThreeCallbacksSecond) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -188,11 +176,11 @@ TEST(ThreeCallbacksSecond) {
 }
 
 TEST(ThreeCallbacksThird) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -215,21 +203,21 @@ TEST(ThreeCallbacksThird) {
 // -----------------------------------------------------------------------------
 
 TEST(FromArg) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
     bool called = false;
     Visit(x,
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](const boost::any&)
 #endif
         {
@@ -240,21 +228,21 @@ TEST(FromArg) {
 }
 
 TEST(FromArgBeforeToArg) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
     bool called = false;
     Visit(x,
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](const boost::any&)
 #endif
         {
@@ -268,11 +256,11 @@ TEST(FromArgBeforeToArg) {
 }
 
 TEST(FromArgAfterToArg) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -281,11 +269,11 @@ TEST(FromArgAfterToArg) {
         [&](int) {
             called = true;
         },
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](const boost::any&)
 #endif
         {
@@ -296,11 +284,11 @@ TEST(FromArgAfterToArg) {
 }
 
 TEST(TwoArgs1) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -309,11 +297,11 @@ TEST(TwoArgs1) {
         [&](float) {
             TEST_FAIL;
         },
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](int x, const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](int x, const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](int x, const boost::any&)
 #endif
         {
@@ -325,21 +313,21 @@ TEST(TwoArgs1) {
 }
 
 TEST(TwoArgs2) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
     bool called = false;
     Visit(x,
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](const Base&, int x)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](const std::any&, int x)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](const boost::any&, int x)
 #endif
         {
@@ -354,31 +342,31 @@ TEST(TwoArgs2) {
 }
 
 TEST(TwoArgs3) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
     bool called = false;
     Visit(x,
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](float, const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](float, const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](float, const boost::any&)
 #endif
         {
             TEST_FAIL;
         },
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](int x, const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](int x, const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](int x, const boost::any&)
 #endif
         {
@@ -392,11 +380,11 @@ TEST(TwoArgs3) {
 // -----------------------------------------------------------------------------
 
 TEST(FromAfterBadTo) {
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     const Base& x = Derived<int>(113);
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     const std::any x(113);
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     const boost::any x(113);
 #endif
 
@@ -405,11 +393,11 @@ TEST(FromAfterBadTo) {
         [&](const int*) {
             TEST_FAIL;
         },
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
         [&](const Base&)
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
         [&](const std::any&)
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         [&](const boost::any&)
 #endif
         {
@@ -421,7 +409,7 @@ TEST(FromAfterBadTo) {
 
 // Order of preference ---------------------------------------------------------
 
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
 
 // Need to specialize to avoid decaying the Derived<> parameter
 template <>
@@ -504,11 +492,11 @@ TEST(PreferFromArgRight) {
 TEST(Move) {
     std::vector<int> vec { 1,2,3,4,5 };
 
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<std::vector<int>>(std::move(vec));
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     std::any x(std::move(vec));
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     boost::any x(std::move(vec));
 #endif
 
@@ -524,11 +512,11 @@ TEST(Move) {
     TEST_TRUE(called);
     TEST_EQ(vec.size(), 5);
 
-#if INHERITANCE
+#ifdef EXAMPLE_INHERITANCE
     TEST_TRUE(static_cast<Derived<std::vector<int>>&>(x).value.empty());
-#elif STD_ANY
+#elif defined EXAMPLE_STD_ANY
     TEST_TRUE(std::any_cast<const std::vector<int>&>(x).empty());
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
     TEST_TRUE(boost::any_cast<const std::vector<int>&>(x).empty());
 #endif
 }
@@ -537,13 +525,13 @@ TEST(Move) {
 
 #include <string_view>
 
-#if !(INHERITANCE)
+#ifndef EXAMPLE_INHERITANCE
 
 TEST(VisitEach) {
     const std::vector<
-#if STD_ANY
+#ifdef EXAMPLE_STD_ANY
         std::any
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         boost::any
 #endif
     > many { 1, 2.f, 3., 'a', "text" };
@@ -587,9 +575,9 @@ TEST(VisitEach) {
 TEST(VisitEachProj) {
     const std::vector<std::pair<
         const char*,
-#if STD_ANY
+#ifdef EXAMPLE_STD_ANY
         std::any
-#elif BOOST_ANY
+#elif defined EXAMPLE_BOOST_ANY
         boost::any
 #endif
     >> many {

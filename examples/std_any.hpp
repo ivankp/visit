@@ -13,3 +13,5 @@ struct VisitADL<std::any, To> {
         return std::any_cast<To>(std::forward<From>(from));
     }
 };
+
+#define EXAMPLE_STD_ANY
