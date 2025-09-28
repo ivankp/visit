@@ -33,23 +33,41 @@ bool Visit(From&& from, F&& callback) {
             callback(static_cast<From&&>(from));
         } else {
             using ADL = VisitADL<DecayedFrom, Arg>;
-            if (!ADL::match(from))
+            decltype(auto) matched = ADL::match(from);
+            if (!matched)
                 return false;
-            callback(ADL::convert(static_cast<From&&>(from)));
+            using Matched = decltype(matched);
+            if constexpr (std::is_same_v<Matched, bool>) {
+                callback(ADL::convert(static_cast<From&&>(from)));
+            } else {
+                callback(ADL::convert(static_cast<Matched&&>(matched)));
+            }
         }
     } else if constexpr (CallbackTypes::size == 3) {
         using Arg1 = typename CallbackTypes::Type<1>;
         using Arg2 = typename CallbackTypes::Type<2>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
-            if (!ADL::match(from))
+            decltype(auto) matched = ADL::match(from);
+            if (!matched)
                 return false;
-            callback(ADL::convert(from), static_cast<From&&>(from));
+            using Matched = decltype(matched);
+            if constexpr (std::is_same_v<Matched, bool>) {
+                callback(ADL::convert(from), static_cast<From&&>(from));
+            } else {
+                callback(ADL::convert(matched), static_cast<From&&>(from));
+            }
         } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
             using ADL = VisitADL<DecayedFrom, Arg2>;
-            if (!ADL::match(from))
+            decltype(auto) matched = ADL::match(from);
+            if (!matched)
                 return false;
-            callback(static_cast<From&&>(from), ADL::convert(from));
+            using Matched = decltype(matched);
+            if constexpr (std::is_same_v<Matched, bool>) {
+                callback(static_cast<From&&>(from), ADL::convert(from));
+            } else {
+                callback(static_cast<From&&>(from), ADL::convert(matched));
+            }
         } else {
             static_assert(detail::false_v<From, Arg1, Arg2>,
                 "For a 2-argument callback, one of the arguments must match "
