@@ -91,6 +91,11 @@ to `match()` and `convert()` by forwarding the return value of `match()` as the
 argument to `convert()` instead of calling `convert()` on the visited value
 (the first argument of `Visit()`).
 
+The output of `match()` will still be used as a boolean condition to
+check if the visited value matched the visitor argument type.
+The type returned by `match()` must either be convertable to `bool`
+or implement `bool operator!()`.
+
 ## Moving and forwarding
 
 ## `VisitEach` and projections
