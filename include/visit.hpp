@@ -95,8 +95,11 @@ auto Visit(From&& from, F&&... callback) {
 
 template <typename Container, typename Proj = detail::identity, typename... F>
 void VisitEach(Container&& container, Proj proj, F&&... callback) {
-    for (auto&& from : container) {
-        Visit(proj(from), static_cast<F&&>(callback)...);
+    for (auto&& element : static_cast<Container&&>(container)) {
+        Visit(
+            proj(static_cast<decltype(element)&&>(element)),
+            static_cast<F&&>(callback)...
+        );
     }
     // This function could, in principle, be implemented using
     // std::invoke(proj, from).
