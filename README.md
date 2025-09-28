@@ -2,6 +2,8 @@
 The Visit library implements type-based pattern matching for visiting objects
 contained in type-erased wrappers such as `std::any`.
 
+Requires at least C++17.
+
 ## Benefits
 * Improved type safety with type matching.
   * Stringly typed lookups can be converted to type-checked visits.
