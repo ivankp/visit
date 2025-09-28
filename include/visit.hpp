@@ -28,7 +28,7 @@ bool Visit(From&& from, F&& callback) {
     using CallbackTypes = CallableTypes_t<F>;
     using DecayedFrom = std::decay_t<From>;
     if constexpr (CallbackTypes::size == 2) {
-        using Arg = typename CallbackTypes::Type<1>;
+        using Arg = typename CallbackTypes::template Type<1>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
             callback(static_cast<From&&>(from));
         } else {
@@ -44,8 +44,8 @@ bool Visit(From&& from, F&& callback) {
             }
         }
     } else if constexpr (CallbackTypes::size == 3) {
-        using Arg1 = typename CallbackTypes::Type<1>;
-        using Arg2 = typename CallbackTypes::Type<2>;
+        using Arg1 = typename CallbackTypes::template Type<1>;
+        using Arg2 = typename CallbackTypes::template Type<2>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
             decltype(auto) matched = ADL::match(from);
