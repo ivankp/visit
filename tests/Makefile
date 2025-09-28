@@ -1,7 +1,7 @@
 EXAMPLES := $(wildcard ../examples/*.hpp)
 TESTS := $(EXAMPLES:../examples/%.hpp=tests-%)
 
-.PHONY: all clean $(FAILURES)
+.PHONY: all clean
 
 all: $(TESTS) failure/test.sh
 	@for tests in $^; do printf "\n$$tests\n"; ./$$tests; done

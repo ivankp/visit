@@ -56,7 +56,7 @@ Visit(value,
 Containers are also supported.
 ```c++
 std::vector<std::any> values(5, 1.2, 'a', std::string("text"));
-VisitEach(values,
+VisitEach(values, {},
     [](int i) {
         std::cout << "int " << i << std::endl;
     },
