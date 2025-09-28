@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "${0%/*}"
+cd "${0%/*}"
 
 for cpp in *.cpp; do
     [[ $cpp == _* ]] && continue
