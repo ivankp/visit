@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "$0")"
+echo "${0%/*}"
 
 for cpp in *.cpp; do
     [[ $cpp == _* ]] && continue

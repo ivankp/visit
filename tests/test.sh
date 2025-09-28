@@ -2,13 +2,13 @@
 
 set -e
 
-cd "$(dirname "$0")"
+cd "${0%/*}"
 mkdir -p build
 
 stds=(c++17 c++20 c++23)
 compilers=(g++ clang++)
 
-srcs=(tests.cpp test.hpp)
+srcs=(tests.cpp test.hpp ../include/{callable,visit}.hpp)
 exes=()
 pids=()
 
@@ -27,7 +27,7 @@ for example in ../examples/*.hpp; do
     for std in "${stds[@]}"; do
         exe="build/$name-$std-$comp"
         exes+=("$exe")
-        if [ "$newest" -nt "$exe" ]; then
+        if [ ! -f "$exe" ] || [ "$newest" -nt "$exe" ]; then
             echo "Compiling $exe"
             "$comp" -std="$std" -Wall -Wextra -Werror -pedantic -O3 \
                 -DEXAMPLE="$name" -I. -I../include \
