@@ -77,4 +77,20 @@ is the one that is called in each case.
 # Documentation
 ## Visitor callback signatures
 
+## Specializing `VisitADL`
+
+## Chaining `match()` and `convert()`
+For some types, matching and conversion are the same operation
+(e.g. dynamic casting of pointers and references to polymorphic types),
+or conversion cannot be done without checking (`any_cast` always checks).
+
+The library provides a means to avoid redoing matching in `convert()`.
+
+If `match()` returns anything other than `bool`, `Visit()` will chain the calls
+to `match()` and `convert()` by forwarding the return value of `match()` as the
+argument to `convert()` instead of calling `convert()` on the visited value
+(the first argument of `Visit()`).
+
 ## Moving and forwarding
+
+## `VisitEach` and projections
