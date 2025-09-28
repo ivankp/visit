@@ -33,14 +33,14 @@ bool Visit(From&& from, F&& callback) {
             callback(static_cast<From&&>(from));
         } else {
             using ADL = VisitADL<DecayedFrom, Arg>;
-            decltype(auto) matched = ADL::match(from);
-            if (!matched)
+            decltype(auto) match = ADL::match(from);
+            if (!match)
                 return false;
-            using Matched = decltype(matched);
-            if constexpr (std::is_same_v<Matched, bool>) {
+            using Match = decltype(match);
+            if constexpr (std::is_same_v<Match, bool>) {
                 callback(ADL::convert(static_cast<From&&>(from)));
             } else {
-                callback(ADL::convert(static_cast<Matched&&>(matched)));
+                callback(ADL::convert(static_cast<Match&&>(match)));
             }
         }
     } else if constexpr (CallbackTypes::size == 3) {
@@ -48,25 +48,25 @@ bool Visit(From&& from, F&& callback) {
         using Arg2 = typename CallbackTypes::template Type<2>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
-            decltype(auto) matched = ADL::match(from);
-            if (!matched)
+            decltype(auto) match = ADL::match(from);
+            if (!match)
                 return false;
-            using Matched = decltype(matched);
-            if constexpr (std::is_same_v<Matched, bool>) {
+            using Match = decltype(match);
+            if constexpr (std::is_same_v<Match, bool>) {
                 callback(ADL::convert(from), static_cast<From&&>(from));
             } else {
-                callback(ADL::convert(matched), static_cast<From&&>(from));
+                callback(ADL::convert(static_cast<Match&&>(match)), static_cast<From&&>(from));
             }
         } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
             using ADL = VisitADL<DecayedFrom, Arg2>;
-            decltype(auto) matched = ADL::match(from);
-            if (!matched)
+            decltype(auto) match = ADL::match(from);
+            if (!match)
                 return false;
-            using Matched = decltype(matched);
-            if constexpr (std::is_same_v<Matched, bool>) {
+            using Match = decltype(match);
+            if constexpr (std::is_same_v<Match, bool>) {
                 callback(static_cast<From&&>(from), ADL::convert(from));
             } else {
-                callback(static_cast<From&&>(from), ADL::convert(matched));
+                callback(static_cast<From&&>(from), ADL::convert(static_cast<Match&&>(match)));
             }
         } else {
             static_assert(detail::false_v<From, Arg1, Arg2>,
