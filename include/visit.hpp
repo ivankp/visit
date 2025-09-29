@@ -3,13 +3,6 @@
 #include <callable.hpp>
 #include <type_traits>
 
-enum class Control : unsigned char {
-    NEXT = 0,
-    CONTINUE = 1,
-    BREAK = 2
-    // TODO: distinguish match failure and deliberately continuing to next callback
-};
-
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(detail::false_v<From, To>,
@@ -17,25 +10,47 @@ struct VisitADL {
     );
 };
 
+enum Control : unsigned char {
+    BREAK_MATCH = 0,
+    CONTINUE_LOOP = 0,
+    BREAK_LOOP = 1,
+    CONTINUE_MATCH = 2,
+    FAILED_MATCH = 4
+};
+
+template <typename>
+constexpr bool isControl = false;
+template <>
+constexpr bool isControl<Control> = true;
+template <>
+constexpr bool isControl<bool> = true;
+
+#define VISIT_CONTROL(...) \
+    if constexpr (retControl) { \
+        return __VA_ARGS__; \
+    } else { \
+        (void) __VA_ARGS__; \
+    }
+
 template <typename From, typename F>
 Control Visit(From&& from, F&& callback) {
     using CallbackTypes = CallableTypes_t<F>;
     using DecayedFrom = std::decay_t<From>;
+    static constexpr bool retControl = isControl<typename CallbackTypes::template Type<0>>;
     if constexpr (CallbackTypes::size == 2) {
         using Arg = typename CallbackTypes::template Type<1>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
-            callback(static_cast<From&&>(from));
+            VISIT_CONTROL(callback(static_cast<From&&>(from)))
         } else {
             using ADL = VisitADL<DecayedFrom, Arg>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return Control::NEXT;
+                return FAILED_MATCH;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
-                // TODO: return Control or don't return
-                callback(ADL::convert(static_cast<From&&>(from)));
+                VISIT_CONTROL(callback(ADL::convert(static_cast<From&&>(from))))
             } else {
-                callback(ADL::convert(static_cast<Match&&>(match)));
+                VISIT_CONTROL(callback(ADL::convert(static_cast<Match&&>(match))))
             }
         }
     } else if constexpr (CallbackTypes::size == 3) {
@@ -45,23 +60,23 @@ Control Visit(From&& from, F&& callback) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return Control::NEXT;
+                return FAILED_MATCH;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
-                callback(ADL::convert(from), static_cast<From&&>(from));
+                VISIT_CONTROL(callback(ADL::convert(from), static_cast<From&&>(from)))
             } else {
-                callback(ADL::convert(static_cast<Match&&>(match)), static_cast<From&&>(from));
+                VISIT_CONTROL(callback(ADL::convert(static_cast<Match&&>(match)), static_cast<From&&>(from)))
             }
         } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
             using ADL = VisitADL<DecayedFrom, Arg2>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return Control::NEXT;
+                return FAILED_MATCH;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
-                callback(static_cast<From&&>(from), ADL::convert(from));
+                VISIT_CONTROL(callback(static_cast<From&&>(from), ADL::convert(from)))
             } else {
-                callback(static_cast<From&&>(from), ADL::convert(static_cast<Match&&>(match)));
+                VISIT_CONTROL(callback(static_cast<From&&>(from), ADL::convert(static_cast<Match&&>(match))))
             }
         } else {
             static_assert(detail::false_v<From, Arg1, Arg2>,
@@ -74,7 +89,7 @@ Control Visit(From&& from, F&& callback) {
             "Visit callbacks must have either 1 or 2 arguments."
         );
     }
-    return Control::CONTINUE;
+    return BREAK_MATCH;
 }
 
 template <typename From, typename... F>
@@ -86,7 +101,7 @@ Control Visit(From&& from, F&&... callback) {
     (void)(((control = Visit(
         static_cast<From&&>(from),
         static_cast<F&&>(callback)
-    )) != Control::NEXT) || ...); // fold over the callback pack
+    )) & 6) && ...); // fold over the callback pack
     return control;
 }
 
@@ -109,7 +124,7 @@ bool VisitEach(Container&& container, Proj proj, F&&... callback) {
         if (Visit(
             proj(static_cast<decltype(element)&&>(element)),
             static_cast<F&&>(callback)...
-        ) == Control::BREAK)
+        ) & 1)
             return true;
     }
     return false;
