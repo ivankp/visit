@@ -3,18 +3,12 @@
 #include <callable.hpp>
 #include <type_traits>
 
-namespace detail {
-
-struct identity {
-    template <typename T>
-    [[nodiscard]] constexpr T&& operator()(T&& x) const noexcept {
-        return static_cast<T&&>(x);
-    }
-
-    using is_transparent = void;
+enum class Control : unsigned char {
+    NEXT = 0,
+    CONTINUE = 1,
+    BREAK = 2
+    // TODO: distinguish match failure and deliberately continuing to next callback
 };
-
-}
 
 template <typename From, typename To, typename = void>
 struct VisitADL {
@@ -24,7 +18,7 @@ struct VisitADL {
 };
 
 template <typename From, typename F>
-bool Visit(From&& from, F&& callback) {
+Control Visit(From&& from, F&& callback) {
     using CallbackTypes = CallableTypes_t<F>;
     using DecayedFrom = std::decay_t<From>;
     if constexpr (CallbackTypes::size == 2) {
@@ -35,9 +29,10 @@ bool Visit(From&& from, F&& callback) {
             using ADL = VisitADL<DecayedFrom, Arg>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return false;
+                return Control::NEXT;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
+                // TODO: return Control or don't return
                 callback(ADL::convert(static_cast<From&&>(from)));
             } else {
                 callback(ADL::convert(static_cast<Match&&>(match)));
@@ -50,7 +45,7 @@ bool Visit(From&& from, F&& callback) {
             using ADL = VisitADL<DecayedFrom, Arg1>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return false;
+                return Control::NEXT;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
                 callback(ADL::convert(from), static_cast<From&&>(from));
@@ -61,7 +56,7 @@ bool Visit(From&& from, F&& callback) {
             using ADL = VisitADL<DecayedFrom, Arg2>;
             decltype(auto) match = ADL::match(from);
             if (!match)
-                return false;
+                return Control::NEXT;
             using Match = decltype(match);
             if constexpr (std::is_same_v<Match, bool>) {
                 callback(static_cast<From&&>(from), ADL::convert(from));
@@ -79,28 +74,45 @@ bool Visit(From&& from, F&& callback) {
             "Visit callbacks must have either 1 or 2 arguments."
         );
     }
-    return true;
+    return Control::CONTINUE;
 }
 
 template <typename From, typename... F>
-auto Visit(From&& from, F&&... callback) {
+Control Visit(From&& from, F&&... callback) {
     static_assert(sizeof...(callback) > 0,
         "Visit() must be called with at least 1 callback argument."
     );
-    return (Visit(
+    Control control;
+    (void)(((control = Visit(
         static_cast<From&&>(from),
         static_cast<F&&>(callback)
-    ) || ...); // fold over the callback pack
+    )) != Control::NEXT) || ...); // fold over the callback pack
+    return control;
+}
+
+namespace detail {
+
+struct identity {
+    template <typename T>
+    [[nodiscard]] constexpr T&& operator()(T&& x) const noexcept {
+        return static_cast<T&&>(x);
+    }
+
+    using is_transparent = void;
+};
+
 }
 
 template <typename Container, typename Proj = detail::identity, typename... F>
-void VisitEach(Container&& container, Proj proj, F&&... callback) {
+bool VisitEach(Container&& container, Proj proj, F&&... callback) {
     for (auto&& element : static_cast<Container&&>(container)) {
-        Visit(
+        if (Visit(
             proj(static_cast<decltype(element)&&>(element)),
             static_cast<F&&>(callback)...
-        );
+        ) == Control::BREAK)
+            return true;
     }
+    return false;
     // This function could, in principle, be implemented using
     // std::invoke(proj, from).
     // But this would require including <functional>.
