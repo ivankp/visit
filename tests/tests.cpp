@@ -541,35 +541,35 @@ TEST(VisitEach) {
 
     VisitEach(many, {},
         [&](double x) {
-            called[2] = i++;
+            called[2] = ++i;
             TEST_EQ(x, 3.);
         },
         [&](float x) {
-            called[1] = i++;
+            called[1] = ++i;
             TEST_EQ(x, 2.f);
         },
         [&](int x) {
-            called[0] = i++;
+            called[0] = ++i;
             TEST_EQ(x, 1);
         },
         [&](char x) {
-            called[3] = i++;
+            called[3] = ++i;
             TEST_EQ(x, 'a');
         },
         [&](std::string_view) {
             TEST_FAIL;
         },
         [&](const char* x) {
-            called[4] = i++;
+            called[4] = ++i;
             TEST_EQ(std::string_view(x), "text");
         }
     );
     TEST_EQ(i, 5);
-    TEST_EQ(called[0], 0);
-    TEST_EQ(called[1], 1);
-    TEST_EQ(called[2], 2);
-    TEST_EQ(called[3], 3);
-    TEST_EQ(called[4], 4);
+    TEST_EQ(called[0], 1);
+    TEST_EQ(called[1], 2);
+    TEST_EQ(called[2], 3);
+    TEST_EQ(called[3], 4);
+    TEST_EQ(called[4], 5);
 }
 
 TEST(VisitEachProj) {
@@ -593,34 +593,34 @@ TEST(VisitEachProj) {
 
     VisitEach(many, [](const auto& x) -> const auto& { return x.second; },
         [&](double x) {
-            called[2] = i++;
+            called[2] = ++i;
             TEST_EQ(x, 3.);
         },
         [&](float x) {
-            called[1] = i++;
+            called[1] = ++i;
             TEST_EQ(x, 2.f);
         },
         [&](int x) {
-            called[0] = i++;
+            called[0] = ++i;
             TEST_EQ(x, 1);
         },
         [&](char x) {
-            called[3] = i++;
+            called[3] = ++i;
             TEST_EQ(x, 'a');
         },
         [&](std::string_view) {
             TEST_FAIL;
         },
         [&](const char* x) {
-            called[4] = i++;
+            called[4] = ++i;
             TEST_EQ(std::string_view(x), "text");
         }
     );
     TEST_EQ(i, 5);
-    TEST_EQ(called[0], 0);
-    TEST_EQ(called[1], 1);
-    TEST_EQ(called[2], 2);
-    TEST_EQ(called[3], 3);
-    TEST_EQ(called[4], 4);
+    TEST_EQ(called[0], 1);
+    TEST_EQ(called[1], 2);
+    TEST_EQ(called[2], 3);
+    TEST_EQ(called[3], 4);
+    TEST_EQ(called[4], 5);
 }
 #endif
