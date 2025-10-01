@@ -628,4 +628,29 @@ TEST(VisitEachProj) {
     TEST_EQ(called[3], 4);
     TEST_EQ(called[4], 5);
 }
+
+TEST(VisitEachControl) {
+#ifdef EXAMPLE_STD_ANY
+        using std::any;
+#elif defined EXAMPLE_BOOST_ANY
+        using boost::any;
+#endif
+    const std::vector<any> many { 1.1, 2.2f, 3, 'a', 4, "text" };
+
+    int value = 0;
+    int count = 0;
+    const bool found = VisitEach(many, {},
+        [&](int x) {
+            value = x;
+            return true;
+        },
+        [&](const any&) {
+            ++count;
+        }
+    );
+    TEST_TRUE(found);
+    TEST_NE(value, 4);
+    TEST_EQ(value, 3);
+    TEST_EQ(count, 2);
+}
 #endif

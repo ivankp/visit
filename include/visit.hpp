@@ -24,7 +24,7 @@ enum Control : unsigned char {
 
 #define VISIT_CONTROL(...) \
     if constexpr (retControl) { \
-        return callback(__VA_ARGS__); \
+        return (Control)callback(__VA_ARGS__); \
     } else { \
         (void) callback(__VA_ARGS__); \
     }
@@ -90,10 +90,10 @@ Control Visit(Tfrom&& from, Tcallback&&... callback) {
         "Visit() must be called with at least 1 callback argument."
     );
     Control control;
-    (void)(((control = Visit(
+    (void)((control = Visit(
         VISIT_FWD(from),
         VISIT_FWD(callback)
-    )) & BREAK_MATCH) || ...); // fold over the callback pack
+    )) || ...); // fold over the callback pack
     return control;
 }
 

@@ -39,6 +39,11 @@ int main() {
         throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #LHS " != " #RHS); \
     }
 
+#define TEST_NE(LHS, RHS) \
+    if (!( (LHS) != (RHS) )) { \
+        throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #LHS " == " #RHS); \
+    }
+
 #define TEST_TRUE(X) \
     if (!(X)) { \
         throw std::runtime_error(__FILE__ ":" STR(__LINE__) ": " #X " is false"); \
