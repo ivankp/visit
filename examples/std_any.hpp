@@ -1,6 +1,8 @@
 #include "visit.hpp"
 #include <any>
 
+namespace visit {
+
 template <typename To>
 struct VisitADL<std::any, To> {
     template <typename From>
@@ -13,5 +15,7 @@ struct VisitADL<std::any, To> {
         return std::any_cast<To>(std::forward<From>(from));
     }
 };
+
+}
 
 #define EXAMPLE_STD_ANY

@@ -26,6 +26,8 @@ struct Derived : Base {
     Derived(Args&&... args): value(std::forward<Args>(args)...) { }
 };
 
+namespace visit {
+
 template <typename To>
 struct VisitADL<Base, To> {
 private:
@@ -47,5 +49,7 @@ public:
         return static_cast<To>(cast(&from)->value);
     }
 };
+
+}
 
 #define EXAMPLE_INHERITANCE

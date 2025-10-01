@@ -1,6 +1,9 @@
 #include "test.hpp"
 #include STR(../examples/EXAMPLE.hpp)
 
+using visit::Visit;
+using visit::VisitEach;
+
 TEST(MutableByValue) {
 #ifdef EXAMPLE_INHERITANCE
     Base&& x = Derived<int>(113);
@@ -412,6 +415,7 @@ TEST(FromAfterBadTo) {
 #ifdef EXAMPLE_INHERITANCE
 
 // Need to specialize to avoid decaying the Derived<> parameter
+namespace visit {
 template <>
 struct VisitADL<Base, const Base&> {
 private:
@@ -433,6 +437,7 @@ public:
         return cast(&from)->value;
     }
 };
+}
 
 TEST(PreferFromArgSingle) {
     // Test that a non-converting *from* arg takes precedence over

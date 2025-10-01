@@ -10,6 +10,8 @@ struct Derived : Base {
     Derived(T x): value(x) { }
 };
 
+namespace visit {
+
 template <typename To>
 struct VisitADL<Base, To> {
     using Type = std::decay_t<To>;
@@ -25,7 +27,11 @@ struct VisitADL<Base, To> {
     }
 };
 
+}
+
 int main() {
+    using visit::Visit;
+
     Base* a = new Derived<int>(1);
     Base* b = new Derived<double>(2.);
     Base* c = new Base;

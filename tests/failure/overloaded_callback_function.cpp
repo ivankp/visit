@@ -1,6 +1,7 @@
 // .*overloaded
 
 #include "examples/inheritance.hpp"
+using visit::Visit;
 
 void visitor(int) { }
 void visitor(float) { }

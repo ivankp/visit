@@ -1,6 +1,7 @@
 // binding reference of type ‘Base&’ to ‘const Base’ discards qualifiers
 
 #include "examples/inheritance.hpp"
+using visit::Visit;
 
 int main() {
     const Base& x = Derived<int>(113);
