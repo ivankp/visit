@@ -31,14 +31,14 @@ To anable visiting a type, one needs to specialize the `struct VisitADL` templat
 #include <any>
 
 template <typename To>
-struct VisitADL<std::any, To> {
+struct visit::VisitADL<std::any, To> {
     template <typename From>
-    static bool match(From&& from) {
+    static bool match(From&& from) noexcept {
         return from.type() == typeid(To);
     }
 
     template <typename From>
-    static To convert(From&& from) {
+    static To convert(From&& from) noexcept {
         return std::any_cast<To>(std::forward<From>(from));
     }
 };
@@ -49,7 +49,7 @@ and `To` designates the type to which the `from` value will be converted.
 With the overload in place, an `std::any` can be visited as follows:
 ```c++
 std::any value(5);
-Visit(value,
+visit::Visit(value,
     [](int x) {
         std::cout << x << std::endl;
     }
@@ -58,7 +58,7 @@ Visit(value,
 Containers are also supported.
 ```c++
 std::vector<std::any> values(5, 1.2, 'a', std::string("text"));
-VisitEach(values, {},
+visit::VisitEach(values, {},
     [](int i) {
         std::cout << "int " << i << std::endl;
     },
@@ -95,8 +95,31 @@ argument to `convert()` instead of calling `convert()` on the visited value
 
 The output of `match()` will still be used as a boolean condition to
 check if the visited value matched the visitor argument type.
-The type returned by `match()` must either be convertable to `bool`
+The type returned by `match()` must either be convertible to `bool`
 or implement `bool operator!()`.
+
+Using this feature the `VisitADL` specialization can be implemented in the
+following way.
+The `std::any_cast()` overload taking a pointer to `std::any` instead of a
+reference returns a null pointer on failure instead of throwing an exception.
+Thus, the return of `match()` can be used as both a matching condition and
+the argument for `convert()`.
+This implementation avoids repeating the type check inevitable performed by
+any version of `std::any_cast()`.
+```c++
+template <typename To>
+struct visit::VisitADL<std::any, To> {
+    template <typename From>
+    static auto* match(From&& from) noexcept {
+        return std::any_cast<std::decay_t<To>>(&from);
+    }
+
+    template <typename Matched>
+    static To convert(Matched* matched) noexcept {
+        return static_cast<To>(*matched);
+    }
+};
+```
 
 ## Moving and forwarding
 
