@@ -23,11 +23,11 @@ enum Control : unsigned char {
 
 #define VISIT_FWD(x) static_cast<T##x&&>(x)
 
-#define VISIT_CONTROL(...) \
+#define VISIT_CONTROL(ARGS) \
     if constexpr (retControl) { \
-        return callback(__VA_ARGS__) ? BREAK_LOOP : CONTINUE_LOOP; \
+        return callback ARGS ? BREAK_LOOP : CONTINUE_LOOP; \
     } else { \
-        (void) callback(__VA_ARGS__); \
+        (void) callback ARGS; \
     }
 
 #define VISIT_MATCH(Arg, FROM, MATCH) \
@@ -37,9 +37,9 @@ enum Control : unsigned char {
         return CONTINUE_MATCH; \
     using Tmatch = decltype(match); \
     if constexpr (std::is_same_v<Tmatch, bool>) { \
-        VISIT_CONTROL FROM \
+        VISIT_CONTROL(FROM) \
     } else { \
-        VISIT_CONTROL MATCH \
+        VISIT_CONTROL(MATCH) \
     }
 
 template <typename Tfrom, typename Tcallback>
@@ -51,7 +51,7 @@ Control Visit(Tfrom&& from, Tcallback&& callback) {
     if constexpr (CallbackTypes::size == 2) {
         using Arg = typename CallbackTypes::template Type<1>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
-            VISIT_CONTROL(VISIT_FWD(from))
+            VISIT_CONTROL(( VISIT_FWD(from) ))
         } else {
             VISIT_MATCH( Arg,
                 ( ADL::convert(VISIT_FWD(from)) ),
