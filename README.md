@@ -123,4 +123,10 @@ struct visit::VisitADL<std::any, To> {
 
 ## Moving and forwarding
 
-## `VisitEach` and projections
+## `VisitEach`
+
+### Projections
+
+### Break from callbacks
+
+## Compilation timing
