@@ -635,22 +635,51 @@ TEST(VisitEachControl) {
 #elif defined EXAMPLE_BOOST_ANY
         using boost::any;
 #endif
-    const std::vector<any> many { 1.1, 2.2f, 3, 'a', 4, "text" };
+    const std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
 
     int value = 0;
     int count = 0;
     const bool found = VisitEach(many, {},
-        [&](int x) {
+        [&](int x) -> bool { // only returning bool counts as control
             value = x;
-            return true;
+            return x == 4;
         },
         [&](const any&) {
             ++count;
         }
     );
     TEST_TRUE(found);
+    TEST_NE(value, 2);
+    TEST_NE(value, 5);
+    TEST_EQ(value, 4);
+    TEST_EQ(count, 2); // ints are not counted
+}
+
+TEST(VisitEachNotControl) {
+#ifdef EXAMPLE_STD_ANY
+        using std::any;
+#elif defined EXAMPLE_BOOST_ANY
+        using boost::any;
+#endif
+    const std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
+
+    int value = 0;
+    int count = 0;
+    const bool found = VisitEach(many, {},
+        [&](int x) -> bool& { // even bool& doesn't count as control
+            value = x;
+            static bool b;
+            b = x == 4;
+            return b;
+        },
+        [&](const any&) {
+            ++count;
+        }
+    );
+    TEST_FALSE(found);
+    TEST_NE(value, 2);
     TEST_NE(value, 4);
-    TEST_EQ(value, 3);
-    TEST_EQ(count, 2);
+    TEST_EQ(value, 5);
+    TEST_EQ(count, 4); // ints are not counted
 }
 #endif

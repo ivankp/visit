@@ -14,17 +14,18 @@ struct VisitADL {
 };
 
 enum Control : unsigned char {
-    BREAK_LOOP = 1,
-    CONTINUE_LOOP = 0,
+    LOOP_BIT = 1,
+    CONTINUE_MATCH = 0,
     BREAK_MATCH = 2,
-    CONTINUE_MATCH = 0
+    CONTINUE_LOOP = 2,
+    BREAK_LOOP = 3
 };
 
 #define VISIT_FWD(x) static_cast<T##x&&>(x)
 
 #define VISIT_CONTROL(...) \
     if constexpr (retControl) { \
-        return (Control)callback(__VA_ARGS__); \
+        return callback(__VA_ARGS__) ? BREAK_LOOP : CONTINUE_LOOP; \
     } else { \
         (void) callback(__VA_ARGS__); \
     }
@@ -116,7 +117,7 @@ bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
         if (Visit(
             proj(static_cast<decltype(element)&&>(element)),
             VISIT_FWD(callback)...
-        ) & BREAK_LOOP)
+        ) & LOOP_BIT)
             return true;
     }
     return false;
