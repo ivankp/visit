@@ -1,5 +1,5 @@
 #include "test.hpp"
-#include STR(../examples/EXAMPLE.hpp)
+#include STR(examples/EXAMPLE.hpp)
 
 using visit::Visit;
 using visit::VisitEach;
