@@ -8,7 +8,7 @@ namespace visit {
 
 template <typename From, typename To, typename = void>
 struct VisitADL {
-    static_assert(detail::false_v<From, To>,
+    static_assert(::detail::false_v<From, To>,
         "VisitADL is not specialized for these types."
     );
 };
@@ -72,13 +72,13 @@ Control Visit(Tfrom&& from, Tcallback&& callback) {
                 ( VISIT_FWD(from), ADL::convert(VISIT_FWD(match)) )
             );
         } else {
-            static_assert(detail::false_v<Tfrom, Arg1, Arg2>,
+            static_assert(::detail::false_v<Tfrom, Arg1, Arg2>,
                 "For a 2-argument callback, one of the arguments must match "
                 "the visited type."
             );
         }
     } else {
-        static_assert(detail::false_v<Tcallback>,
+        static_assert(::detail::false_v<Tcallback>,
             "Visit callbacks must have either 1 or 2 arguments."
         );
     }

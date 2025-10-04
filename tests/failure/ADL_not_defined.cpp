@@ -1,4 +1,4 @@
-// static assertion failed: VisitADL is not specialized for these types.
+// static_assert VisitADL is not specialized for these types.
 
 #include "visit.hpp"
 using visit::Visit;

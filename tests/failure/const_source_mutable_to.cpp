@@ -1,4 +1,4 @@
-// .*const int
+// static_cast
 
 #include "examples/inheritance.hpp"
 using visit::Visit;

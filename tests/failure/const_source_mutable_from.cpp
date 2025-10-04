@@ -1,4 +1,4 @@
-// binding reference of type ‘Base&’ to ‘const Base’ discards qualifiers
+// \<Base\s*\&.*\<const\s\+Base\>\|\<const\s\+Base\>.*\<Base\s*\&
 
 #include "examples/inheritance.hpp"
 using visit::Visit;
