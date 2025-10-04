@@ -36,7 +36,7 @@ for example in "${examples[@]}"; do
         exes+=("$exe")
         if [ ! -f "$exe" ] || [ "$newest" -nt "$exe" ]; then
             if [ "$comp" == 'cl' ]; then
-                cmd=("$comp" /EHsc /std:"$std" /O2 /W3 /WX \
+                cmd=("$comp" /EHsc /std:"$std" /O2 /W4 /WX /wd4702 \
                     /DEXAMPLE="$example" /I. /I.. /I../include \
                     /Fe"$exe" "${srcs[0]}")
             else
