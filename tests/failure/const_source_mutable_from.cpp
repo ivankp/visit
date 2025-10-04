@@ -1,4 +1,4 @@
-// \<Base\s*\&.*\<const\s\+Base\>\|\<const\s\+Base\>.*\<Base\s*\&
+// const Base
 
 #include "examples/inheritance.hpp"
 using visit::Visit;

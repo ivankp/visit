@@ -13,7 +13,7 @@ for cpp in *.cpp; do
         if [ "$1" == 'cl' ]; then
             expected="error C[0-9]\\+: static_assert failed: '${BASH_REMATCH[1]}'"
         else
-            expected="error: static assertion failed: ${BASH_REMATCH[1]}"
+            expected="error: static assertion failed.*: ${BASH_REMATCH[1]}"
         fi
     fi
 
