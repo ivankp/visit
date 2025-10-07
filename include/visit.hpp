@@ -6,6 +6,11 @@
 
 namespace visit {
 
+/**
+ * \brief Specialize this struct template to enable Visit() and VisitEach()
+ * \tparam From The type of the visited wrapper
+ * \tparam To   The type of the wrapped value
+ */
 template <typename From, typename To, typename = void>
 struct VisitADL {
     static_assert(::detail::false_v<From, To>,
@@ -42,6 +47,12 @@ enum Control : unsigned char {
         VISIT_IMPL_CONTROL(MATCH) \
     }
 
+/**
+ * \brief Passes the value wrapped inside from to the callback, if the callback
+ *     argument matches the type.
+ * \param from     The visited wrapper
+ * \param callback Visitor function
+ */
 template <typename Tfrom, typename Tcallback>
 Control Visit(Tfrom&& from, Tcallback&& callback) {
     using CallbackTypes = CallableTypes_t<Tcallback>;
@@ -85,6 +96,11 @@ Control Visit(Tfrom&& from, Tcallback&& callback) {
     return BREAK_MATCH;
 }
 
+/**
+ * \brief Passes the value wrapped inside `from` to the first matching callback
+ * \param from     The visited wrapper
+ * \param callback A pack of callback functions that will be tried in order
+ */
 template <typename Tfrom, typename... Tcallback>
 Control Visit(Tfrom&& from, Tcallback&&... callback) {
     static_assert(sizeof...(callback) > 0,
@@ -100,6 +116,10 @@ Control Visit(Tfrom&& from, Tcallback&&... callback) {
 
 namespace detail {
 
+/**
+ * Callable used as an identity projection.
+ * It simply forwards the argument.
+ */
 struct identity {
     template <typename T>
     [[nodiscard]] constexpr T&& operator()(T&& x) const noexcept {
@@ -111,6 +131,13 @@ struct identity {
 
 }
 
+/**
+ * \brief Visits each element of the container
+ * \param container Container of elements
+ * \param proj      Projection function for transforming elements into visitable types
+ * \param callback  A pack of callback functions that will be tried in order
+ *                  for each element
+ */
 template <typename Tcontainer, typename Tproj = detail::identity, typename... Tcallback>
 bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
     for (auto&& element : VISIT_IMPL_FWD(container)) {
