@@ -21,25 +21,25 @@ enum Control : unsigned char {
     BREAK_LOOP = 3
 };
 
-#define VISIT_FWD(x) static_cast<T##x&&>(x)
+#define VISIT_IMPL_FWD(x) static_cast<T##x&&>(x)
 
-#define VISIT_CONTROL(ARGS) \
+#define VISIT_IMPL_CONTROL(ARGS) \
     if constexpr (retControl) { \
         return callback ARGS ? BREAK_LOOP : CONTINUE_LOOP; \
     } else { \
         (void) callback ARGS; \
     }
 
-#define VISIT_MATCH(Arg, FROM, MATCH) \
+#define VISIT_IMPL_MATCH(Arg, FROM, MATCH) \
     using ADL = VisitADL<DecayedFrom, Arg>; \
-    decltype(auto) match = ADL::match(from); \
+    decltype(auto) match = ADL::match(VISIT_IMPL_FWD(from)); \
     if (!match) \
         return CONTINUE_MATCH; \
     using Tmatch = decltype(match); \
     if constexpr (std::is_same_v<Tmatch, bool>) { \
-        VISIT_CONTROL(FROM) \
+        VISIT_IMPL_CONTROL(FROM) \
     } else { \
-        VISIT_CONTROL(MATCH) \
+        VISIT_IMPL_CONTROL(MATCH) \
     }
 
 template <typename Tfrom, typename Tcallback>
@@ -51,25 +51,25 @@ Control Visit(Tfrom&& from, Tcallback&& callback) {
     if constexpr (CallbackTypes::size == 2) {
         using Arg = typename CallbackTypes::template Type<1>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
-            VISIT_CONTROL(( VISIT_FWD(from) ))
+            VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(from) ))
         } else {
-            VISIT_MATCH( Arg,
-                ( ADL::convert(VISIT_FWD(from)) ),
-                ( ADL::convert(VISIT_FWD(match)) )
+            VISIT_IMPL_MATCH( Arg,
+                ( ADL::convert(VISIT_IMPL_FWD(from)) ),
+                ( ADL::convert(VISIT_IMPL_FWD(match)) )
             );
         }
     } else if constexpr (CallbackTypes::size == 3) {
         using Arg1 = typename CallbackTypes::template Type<1>;
         using Arg2 = typename CallbackTypes::template Type<2>;
         if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
-            VISIT_MATCH( Arg1,
-                ( ADL::convert(VISIT_FWD(from)), VISIT_FWD(from) ),
-                ( ADL::convert(VISIT_FWD(match)), VISIT_FWD(from) )
+            VISIT_IMPL_MATCH( Arg1,
+                ( ADL::convert(VISIT_IMPL_FWD(from)), VISIT_IMPL_FWD(from) ),
+                ( ADL::convert(VISIT_IMPL_FWD(match)), VISIT_IMPL_FWD(from) )
             );
         } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
-            VISIT_MATCH( Arg2,
-                ( VISIT_FWD(from), ADL::convert(VISIT_FWD(from)) ),
-                ( VISIT_FWD(from), ADL::convert(VISIT_FWD(match)) )
+            VISIT_IMPL_MATCH( Arg2,
+                ( VISIT_IMPL_FWD(from), ADL::convert(VISIT_IMPL_FWD(from)) ),
+                ( VISIT_IMPL_FWD(from), ADL::convert(VISIT_IMPL_FWD(match)) )
             );
         } else {
             static_assert(::detail::false_v<Tfrom, Arg1, Arg2>,
@@ -92,8 +92,8 @@ Control Visit(Tfrom&& from, Tcallback&&... callback) {
     );
     Control control;
     (void)((control = Visit(
-        VISIT_FWD(from),
-        VISIT_FWD(callback)
+        VISIT_IMPL_FWD(from),
+        VISIT_IMPL_FWD(callback)
     )) || ...); // fold over the callback pack
     return control;
 }
@@ -113,10 +113,10 @@ struct identity {
 
 template <typename Tcontainer, typename Tproj = detail::identity, typename... Tcallback>
 bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
-    for (auto&& element : VISIT_FWD(container)) {
+    for (auto&& element : VISIT_IMPL_FWD(container)) {
         if (Visit(
             proj(static_cast<decltype(element)&&>(element)),
-            VISIT_FWD(callback)...
+            VISIT_IMPL_FWD(callback)...
         ) & LOOP_BIT)
             return true;
     }
@@ -128,6 +128,6 @@ bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
 
 } // namespace visit
 
-#undef VISIT_FWD
-#undef VISIT_CONTROL
-#undef VISIT_MATCH
+#undef VISIT_IMPL_FWD
+#undef VISIT_IMPL_CONTROL
+#undef VISIT_IMPL_MATCH
