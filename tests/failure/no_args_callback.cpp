@@ -1,4 +1,4 @@
-// static_assert Visit callbacks must have either 1 or 2 arguments.
+// error.*static.*assert.*Visit callbacks must have either 1 or 2 arguments.
 
 #include "examples/inheritance.hpp"
 using visit::Visit;

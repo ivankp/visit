@@ -1,4 +1,4 @@
-// .*overloaded
+// overloaded
 
 #include "examples/inheritance.hpp"
 using visit::Visit;

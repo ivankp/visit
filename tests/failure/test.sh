@@ -4,23 +4,16 @@ cd "${0%/*}"
 
 std="${2:-c++17}"
 
-for cpp in *.cpp; do
-    [[ $cpp == _* ]] && continue
-    echo "${cpp%.cpp}"
+for src in *.cpp; do
+    [[ $src == _* ]] && continue
+    echo "${src%.cpp}"
 
-    expected="$(sed -n '1s:^\s*//\s*::p' "$cpp")"
-    if [[ "$expected" =~ ^static_assert\ +(.*) ]]; then
-        if [ "$1" == 'cl' ]; then
-            expected="error C[0-9]\\+: static_assert failed: '${BASH_REMATCH[1]}'"
-        else
-            expected="error: static assertion failed.*: ${BASH_REMATCH[1]}"
-        fi
-    fi
+    expected="$(sed -n '1s:^\s*//\s*::p' "$src")"
 
     if [ "$1" == 'cl' ]; then
-        cmd=(cl /EHsc /std:"$std" /I../.. /I../../include /Fe/dev/null "$cpp")
+        cmd=(cl /EHsc /std:"$std" /I../.. /I../../include /Fe/dev/null "$src")
     else
-        cmd=("${1:-g++}" -std="$std" -I../.. -I../../include "$cpp" -o /dev/null)
+        cmd=("${1:-g++}" -std="$std" -I../.. -I../../include "$src" -o /dev/null)
     fi
 
     echo -e '\033[34m'"${cmd[@]}"'\033[0m'
