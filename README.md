@@ -191,12 +191,12 @@ to unwrap extra layers of indirection.
 
 For example,
 ```c++
-std::vector<std::pair<std::string, std::any>> many;
+std::vector<std::pair<std::string, std::any>> many { { "value", 5 } };
 VisitEach(many, [](auto& pair) -> auto& { return pair.second; },
     [&](int value, const std::any& obj) { /* . . . */ }
 );
 ```
-The value returned by the projection function is passed to `Visit()`.
+The value returned by the projection function is forwarded to `Visit()`.
 
 The `VisitEach()` template defaults to an identity projection, that forwards
 its argument. The identity projection can be passed simply by writing `{}`.
