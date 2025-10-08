@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+cmd=("${1:-g++}")
+if ! command -v "${cmd[0]}" 2>&1 >/dev/null
+then
+    echo "command ${cmd[0]} does not exist"
+    exit 1
+fi
+
 cd "${0%/*}"
 
 std="${2:-c++17}"
@@ -10,10 +17,10 @@ for src in *.cpp; do
 
     expected="$(sed -n '1s:^\s*//\s*::p' "$src")"
 
-    if [ "$1" == 'cl' ]; then
-        cmd=(cl /EHsc /std:"$std" /I../.. /I../../include /Fe/dev/null "$src")
+    if [ "${cmd[0]}" == 'cl' ]; then
+        cmd=("${cmd[0]}" /EHsc /std:"$std" /I../.. /I../../include /Fe/dev/null "$src")
     else
-        cmd=("${1:-g++}" -std="$std" -I../.. -I../../include "$src" -o /dev/null)
+        cmd=("${cmd[0]}" -std="$std" -I../.. -I../../include "$src" -o /dev/null)
     fi
 
     echo -e '\033[34m'"${cmd[@]}"'\033[0m'
