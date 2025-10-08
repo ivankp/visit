@@ -49,7 +49,7 @@ struct visit::VisitADL<std::any, To> {
 `From` designates the type being visited,
 and `To` designates the type to which the `from` value will be converted.
 
-With the overload in place, an `std::any` can be visited as follows:
+With the overload in place, a `std::any` can be visited as follows:
 ```c++
 std::any value(5);
 visit::Visit(value,
@@ -134,8 +134,8 @@ The library provides a means to avoid redoing matching in `convert()`.
 
 If `match()` returns anything other than `bool`, `Visit()` will chain the calls
 to `match()` and `convert()` by forwarding the return value of `match()` as the
-argument to `convert()` instead of calling `convert()` on the visited value
-(the first argument of `Visit()`).
+argument to `convert()` instead of forwarding `from` to `convert()`, i.e. the
+same argument as `match()`.
 
 The output of `match()` will still be used as a boolean condition to
 check if the visited value matched the visitor argument type.
@@ -149,7 +149,7 @@ template <typename To>
 struct VisitADL<std::any, To> {
     template <typename From>
     static auto* match(From&& from) noexcept {
-        return std::any_cast<std::decay_t<To>>(&from);
+        return std::any_cast<std::remove_reference_t<To>>(&from);
     }
 
     template <typename Matched>
@@ -166,6 +166,7 @@ This implementation avoids repeating the type check inevitably performed by
 any version of `std::any_cast()`.
 
 ## Moving and forwarding
+*Need to write.*
 
 ## `VisitEach`
 The `VisitEach` function provides an means to visit each element of a container.
@@ -222,6 +223,9 @@ if (VisitEach(many, {}, [](int x) { return x == 3; })) {
 ```
 will check if `many` contains an `int` value of `3`, breaking the loop when
 that value is found.
+
+The ability to ask a loop if it exited normally is analogous to Python's
+`for-else` construct.
 
 # Measurements
 ## Compilation timing

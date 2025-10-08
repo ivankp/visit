@@ -5,4 +5,4 @@ cmd=("${1:-g++}" -Wall -Wextra -pedantic -O1 \
   -S test.cpp -o -)
 
 echo "${cmd[@]}"
-"${cmd[@]}" | sed '/^\s*$/d;/^\s*[.#]/d;s/#.*//'
+"${cmd[@]}" | sed '/^\s*$/d;/^\s*[.#]/d;s/\s*#.*//'

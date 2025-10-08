@@ -1,5 +1,7 @@
-#pragma once
+// https://github.com/ivankp/visit
+
 // clang-format off
+#pragma once
 
 #include <callable.hpp>
 #include <type_traits>
@@ -35,8 +37,8 @@ enum Control : unsigned char {
         (void) callback ARGS; \
     }
 
-#define VISIT_IMPL_MATCH(Arg, FROM, MATCH) \
-    using ADL = VisitADL<DecayedFrom, Arg>; \
+#define VISIT_IMPL_MATCH(ARG, FROM, MATCH) \
+    using ADL = VisitADL<DecayedFrom, ARG>; \
     decltype(auto) match = ADL::match(VISIT_IMPL_FWD(from)); \
     if (!match) \
         return CONTINUE_MATCH; \

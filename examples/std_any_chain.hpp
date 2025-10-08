@@ -7,7 +7,7 @@ template <typename To>
 struct VisitADL<std::any, To> {
     template <typename From>
     static auto* match(From&& from) noexcept {
-        return std::any_cast<std::decay_t<To>>(&from);
+        return std::any_cast<std::remove_reference_t<To>>(&from);
     }
 
     template <typename Matched>
