@@ -1,6 +1,6 @@
 // error.*static.*assert.*VisitADL is not specialized for these types.
 
-#include "visit.hpp"
+#include "Visit.hpp"
 using visit::Visit;
 
 struct S { int i; };

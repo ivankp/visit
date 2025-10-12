@@ -18,13 +18,17 @@ for example in ../examples/*.hpp; do
     examples+=("${example%%.hpp}")
 done
 
-srcs=(tests.cpp test.hpp ../include/{callable,visit}.hpp)
+IFS=',' read -ra suite <<< "$4"
+[ ${#suite[@]} -eq 0 ] && suite=(tests*.cpp)
+
+srcs=(test.hpp ../include/*.hpp)
 exes=()
 pids=()
 
+for tests in "${suite[@]}"; do
 for example in "${examples[@]}"; do
     newest="test.sh"
-    for src in "${srcs[@]}" "../examples/${example}.hpp"; do
+    for src in "$tests" "../examples/${example}.hpp" "${srcs[@]}"; do
         if [ "$src" -nt "$newest" ]; then
             newest="$src"
         fi
@@ -32,17 +36,17 @@ for example in "${examples[@]}"; do
 
     for comp in "${compilers[@]}"; do
     for std in "${stds[@]}"; do
-        exe="build/$example-$std-$comp"
+        exe="build/${tests%%.cpp}-$example-$std-$comp"
         exes+=("$exe")
         if [ ! -f "$exe" ] || [ "$newest" -nt "$exe" ]; then
             if [ "$comp" == 'cl' ]; then
                 cmd=("$comp" /EHsc /std:"$std" /O2 /W4 /WX /wd4702 \
                     /DEXAMPLE="$example" /I. /I.. /I../include \
-                    /Fe"$exe" "${srcs[0]}")
+                    /Fe"$exe" "${tests}")
             else
                 cmd=("$comp" -std="$std" -O3 -Wall -Wextra -Werror -pedantic \
                     -DEXAMPLE="$example" -I. -I.. -I../include \
-                    "${srcs[0]}" -o "$exe")
+                    "${tests}" -o "$exe")
             fi
             echo -e '\033[34m'"${cmd[@]}"'\033[0m'
             if [ "$comp" == 'cl' ]; then
@@ -54,6 +58,7 @@ for example in "${examples[@]}"; do
         fi
     done
     done
+done
 done
 
 for pid in ${pids[@]}; do

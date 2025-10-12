@@ -3,7 +3,7 @@
 // clang-format off
 #pragma once
 
-#include <callable.hpp>
+#include <Callable.hpp>
 #include <type_traits>
 
 namespace visit {
@@ -19,6 +19,65 @@ struct VisitADL {
         "VisitADL is not specialized for these types."
     );
 };
+
+/**
+ * \brief Wraps<T> can be used as a callback argument type to check whether the
+ * type of the wrapped value is T without calling convert.
+ * \tparam T Wrapped type
+ */
+template <typename T>
+struct Wraps { };
+
+/**
+ * \brief WrapsEither<T> can be used as a callback argument type to check
+ * whether the type of the wrapped value is either of T... without calling
+ * convert.
+ * \tparam T... Types to patch agains the wrapped type
+ */
+template <typename... T>
+struct WrapsEither { };
+
+namespace detail {
+
+template <typename From, typename To>
+struct VisitADL : ::visit::VisitADL<From, To> { };
+
+/**
+ * \brief VisitADL specialization for Wraps<T>
+ */
+template <typename From, typename To>
+struct VisitADL<From, Wraps<To>> {
+    // Call match from ADL for T
+    template <typename Arg>
+    static bool match(Arg&& arg) {
+        return ::visit::VisitADL<From, To>::match(static_cast<Arg&&>(arg));
+    }
+
+    // Don't convert to delay conversion
+    template <typename Arg>
+    static Wraps<To> convert(Arg&&) noexcept {
+        return { };
+    }
+};
+
+template <typename From, typename... To>
+struct VisitADL<From, WrapsEither<To...>> {
+    // Call match from ADL for T
+    template <typename Arg>
+    static bool match(Arg&& arg) {
+        return (
+            ::visit::VisitADL<From, To>::match(static_cast<Arg&&>(arg)) || ...
+        );
+    }
+
+    // Don't convert to delay conversion
+    template <typename Arg>
+    static WrapsEither<To...> convert(Arg&&) noexcept {
+        return { };
+    }
+};
+
+} // namespace detail
 
 enum Control : unsigned char {
     LOOP_BIT = 1,
@@ -38,7 +97,7 @@ enum Control : unsigned char {
     }
 
 #define VISIT_IMPL_MATCH(ARG, FROM, MATCH) \
-    using ADL = VisitADL<DecayedFrom, ARG>; \
+    using ADL = ::visit::detail::VisitADL<DecayedFrom, ARG>; \
     decltype(auto) match = ADL::match(VISIT_IMPL_FWD(from)); \
     if (!match) \
         return CONTINUE_MATCH; \

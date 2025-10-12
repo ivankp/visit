@@ -1,4 +1,4 @@
-#include "visit.hpp"
+#include "Visit.hpp"
 #include <boost/any.hpp>
 
 namespace visit {
