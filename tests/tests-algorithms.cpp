@@ -88,4 +88,37 @@ TEST(ForEachMap) {
     TEST_EQ(any_cast<int>(many["2"]), 2);
     TEST_EQ(any_cast<int>(many["4"]), 4);
 }
+
+TEST(ForEachMapBreak) {
+    std::map<std::string, any> many {
+        { "1", 1.1 },
+        { "2", 2 },
+        { "3", 3.3f },
+        { "4", 4 },
+        { "5", 'a' },
+        { "6", 5 },
+        { "7", "text" }
+    };
+    visit::ForEach<double, float>(
+        many,
+        [](auto& x) { x = 0; return true; }, // x is any
+        [](auto& x) -> auto& { return x.second; }
+    );
+    TEST_EQ(any_cast<int>(many["1"]), 0);
+    TEST_EQ(any_cast<float>(many["3"]), 3.3f);
+    TEST_EQ(any_cast<int>(many["2"]), 2);
+    TEST_EQ(any_cast<int>(many["4"]), 4);
+}
+
+TEST(ForEachUnwrap) {
+    std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
+    visit::ForEachUnwrap<double&, float&>(
+        many,
+        [](auto& x) { x = 0; } // x referes to the wrapped value
+    );
+    TEST_EQ(any_cast<double>(many[0]), 0);
+    TEST_EQ(any_cast<float>(many[2]), 0);
+    TEST_EQ(any_cast<int>(many[1]), 2);
+    TEST_EQ(any_cast<int>(many[3]), 4);
+}
 #endif

@@ -14,6 +14,7 @@ template <
 >
 auto* FindFirst(Container&& container, Proj proj = { }) {
     using std::begin;
+    // Have to remove reference in order to make a pointer type
     using Element = std::remove_reference_t<
         decltype(proj(*begin(std::declval<Container>())))
     >;
@@ -40,8 +41,26 @@ void ForEach(Container&& container, Callback&& callback, Proj proj = {}) {
 
     VisitEach(static_cast<Container&&>(container), proj,
         [&](Element&& element, WrapsEither<T...>) {
-            callback(static_cast<Element&&>(element));
+            return callback(static_cast<Element&&>(element));
         }
+    );
+}
+
+template <
+    typename... T,
+    typename Container,
+    typename Callback,
+    typename Proj = detail::identity
+>
+void ForEachUnwrap(Container&& container, Callback&& callback, Proj proj = {}) {
+    VisitEach(static_cast<Container&&>(container), proj,
+        [&](T x) {
+            if constexpr (std::is_rvalue_reference_v<T>) {
+                return callback(static_cast<T&&>(x));
+            } else {
+                return callback(x);
+            }
+        }...
     );
 }
 
