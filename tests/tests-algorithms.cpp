@@ -14,6 +14,28 @@
         using boost::any_cast;
 #endif
 
+TEST(Wraps) {
+    const std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
+    int countInts = 0, countOther = 0;
+    visit::VisitEach(many, {},
+        [&](visit::Wraps<int>) { ++countInts; },
+        [&](const any&) { ++countOther; }
+    );
+    TEST_EQ(countInts, 3);
+    TEST_EQ(countOther, 4);
+}
+
+TEST(WrapsEither) {
+    const std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
+    int countFloats = 0, countOther = 0;
+    visit::VisitEach(many, {},
+        [&](visit::WrapsEither<double, float>) { ++countFloats; },
+        [&](const any&) { ++countOther; }
+    );
+    TEST_EQ(countFloats, 2);
+    TEST_EQ(countOther, 5);
+}
+
 TEST(FindFirstOneType) {
     const std::vector<any> many { 1.1, 2, 3.3f, 4, 'a', 5, "text" };
     auto* x = visit::FindFirst<int>(many);

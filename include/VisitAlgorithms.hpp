@@ -7,14 +7,6 @@
 
 namespace visit {
 
-// template <typename Container, typename Proj>
-// constexpr auto* ElementPointer() noexcept {
-//     using std::begin;
-//     return static_cast<std::remove_reference_t<
-//         decltype(std::declval<Proj>()(*begin(std::declval<Container>())))
-//     >*>(nullptr);
-// }
-
 template <
     typename... T,
     typename Container,
@@ -33,18 +25,6 @@ auto* FindFirst(Container&& container, Proj proj = { }) {
             return true; // break VisitEach loop
         }
     );
-    /*
-    for (auto& element : static_cast<Container&&>(container)) {
-        auto& x = proj(element);
-        if ((
-            VisitADL<std::decay_t<decltype(element)>, T>::match(x)
-            || ...
-        )) {
-            ptr = &x;
-            break;
-        }
-    }
-    */
     return ptr;
 }
 
