@@ -10,74 +10,51 @@ namespace visit {
 
 /**
  * \brief Specialize this struct template to enable Visit() and VisitEach()
- * \tparam From The type of the visited wrapper
- * \tparam To   The type of the wrapped value
+ * \tparam Node   The type containing the value
+ * \tparam Value  The type contained by the node
  */
-template <typename From, typename To, typename = void>
+template <typename Node, typename Value, typename = void>
 struct VisitADL {
-    static_assert(::detail::false_v<From, To>,
+    static_assert(::detail::false_v<Node, Value>,
         "VisitADL is not specialized for these types."
     );
 };
 
 /**
- * \brief Wraps<T> can be used as a callback argument type to check whether the
- * type of the wrapped value is T without calling convert.
- * \tparam T Wrapped type
+ * \brief Wraps<T...> can be used as a callback argument type to check whether
+ *   the contained value type is either of T... without calling convert.
+ * \tparam ...  Possible value types
  */
-template <typename T>
+template <typename...>
 struct Wraps { };
-
-/**
- * \brief WrapsEither<T> can be used as a callback argument type to check
- * whether the type of the wrapped value is either of T... without calling
- * convert.
- * \tparam T... Types to patch agains the wrapped type
- */
-template <typename... T>
-struct WrapsEither { };
 
 namespace detail {
 
-template <typename From, typename To>
-struct VisitADL : ::visit::VisitADL<From, To> { };
+template <typename Node, typename Value>
+struct VisitADL : ::visit::VisitADL<Node, Value> { };
 
 /**
- * \brief VisitADL specialization for Wraps<T>
+ * \brief VisitADL specialization for Wraps<...>
  */
-template <typename From, typename To>
-struct VisitADL<From, Wraps<To>> {
-    // Call match from ADL for T
-    template <typename Arg>
-    static bool match(Arg&& arg) {
-        return ::visit::VisitADL<From, To>::match(static_cast<Arg&&>(arg));
-    }
-
-    // Don't convert to delay conversion
-    template <typename Arg>
-    static Wraps<To> convert(Arg&&) noexcept {
-        return { };
-    }
-};
-
-template <typename From, typename... To>
-struct VisitADL<From, WrapsEither<To...>> {
-    // Call match from ADL for T
-    template <typename Arg>
-    static bool match(Arg&& arg) {
+template <typename Node, typename... Value>
+struct VisitADL<Node, Wraps<Value...>> {
+    // Call match() from Value ADL
+    template <typename T>
+    static bool match(T&& x) {
         return (
-            ::visit::VisitADL<From, To>::match(static_cast<Arg&&>(arg)) || ...
+            ::visit::VisitADL<Node, Value>::match(static_cast<T&&>(x))
+            || ...
         );
     }
 
     // Don't convert to delay conversion
-    template <typename Arg>
-    static WrapsEither<To...> convert(Arg&&) noexcept {
+    template <typename T>
+    static Wraps<Value...> convert(T&&) noexcept {
         return { };
     }
 };
 
-} // namespace detail
+} // namespace visit::detail
 
 enum Control : unsigned char {
     LOOP_BIT = 1,
@@ -91,60 +68,60 @@ enum Control : unsigned char {
 
 #define VISIT_IMPL_CONTROL(ARGS) \
     if constexpr (retControl) { \
-        return callback ARGS ? BREAK_LOOP : CONTINUE_LOOP; \
+        return VISIT_IMPL_FWD(callback) ARGS ? BREAK_LOOP : CONTINUE_LOOP; \
     } else { \
-        (void) callback ARGS; \
+        (void) VISIT_IMPL_FWD(callback) ARGS; \
     }
 
-#define VISIT_IMPL_MATCH(ARG, FROM, MATCH) \
-    using ADL = ::visit::detail::VisitADL<DecayedFrom, ARG>; \
-    decltype(auto) match = ADL::match(VISIT_IMPL_FWD(from)); \
+#define VISIT_IMPL_MATCH(ARG, NODE, MATCH) \
+    using ADL = ::visit::detail::VisitADL<DecayedNode, ARG>; \
+    decltype(auto) match = ADL::match(VISIT_IMPL_FWD(node)); \
     if (!match) \
         return CONTINUE_MATCH; \
     using Tmatch = decltype(match); \
     if constexpr (std::is_same_v<Tmatch, bool>) { \
-        VISIT_IMPL_CONTROL(FROM) \
+        VISIT_IMPL_CONTROL(NODE) \
     } else { \
         VISIT_IMPL_CONTROL(MATCH) \
     }
 
 /**
- * \brief Passes the value wrapped inside from to the callback, if the callback
- *     argument matches the type.
- * \param from     The visited wrapper
- * \param callback Visitor function
+ * \brief Passes the value wrapped inside the node to the callback, if the
+ *   callback argument matches the value type.
+ * \param node      The node to be visited
+ * \param callback  Visitor function
  */
-template <typename Tfrom, typename Tcallback>
-Control Visit(Tfrom&& from, Tcallback&& callback) {
+template <typename Tnode, typename Tcallback>
+Control Visit(Tnode&& node, Tcallback&& callback) {
     using CallbackTypes = CallableTypes_t<Tcallback>;
-    using DecayedFrom = std::decay_t<Tfrom>;
+    using DecayedNode = std::decay_t<Tnode>;
     static constexpr bool retControl =
         std::is_same_v<typename CallbackTypes::template Type<0>, bool>;
     if constexpr (CallbackTypes::size == 2) {
         using Arg = typename CallbackTypes::template Type<1>;
-        if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg>>) {
-            VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(from) ))
+        if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg>>) {
+            VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(node) ))
         } else {
             VISIT_IMPL_MATCH( Arg,
-                ( ADL::convert(VISIT_IMPL_FWD(from)) ),
+                ( ADL::convert(VISIT_IMPL_FWD(node)) ),
                 ( ADL::convert(VISIT_IMPL_FWD(match)) )
             );
         }
     } else if constexpr (CallbackTypes::size == 3) {
         using Arg1 = typename CallbackTypes::template Type<1>;
         using Arg2 = typename CallbackTypes::template Type<2>;
-        if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg2>>) {
+        if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg2>>) {
             VISIT_IMPL_MATCH( Arg1,
-                ( ADL::convert(VISIT_IMPL_FWD(from)), VISIT_IMPL_FWD(from) ),
-                ( ADL::convert(VISIT_IMPL_FWD(match)), VISIT_IMPL_FWD(from) )
+                ( ADL::convert(VISIT_IMPL_FWD(node)), VISIT_IMPL_FWD(node) ),
+                ( ADL::convert(VISIT_IMPL_FWD(match)), VISIT_IMPL_FWD(node) )
             );
-        } else if constexpr (std::is_same_v<DecayedFrom, std::decay_t<Arg1>>) {
+        } else if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg1>>) {
             VISIT_IMPL_MATCH( Arg2,
-                ( VISIT_IMPL_FWD(from), ADL::convert(VISIT_IMPL_FWD(from)) ),
-                ( VISIT_IMPL_FWD(from), ADL::convert(VISIT_IMPL_FWD(match)) )
+                ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(node)) ),
+                ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(match)) )
             );
         } else {
-            static_assert(::detail::false_v<Tfrom, Arg1, Arg2>,
+            static_assert(::detail::false_v<Tnode, Arg1, Arg2>,
                 "For a 2-argument callback, one of the arguments must match "
                 "the visited type."
             );
@@ -158,18 +135,18 @@ Control Visit(Tfrom&& from, Tcallback&& callback) {
 }
 
 /**
- * \brief Passes the value wrapped inside `from` to the first matching callback
- * \param from     The visited wrapper
- * \param callback A pack of callback functions that will be tried in order
+ * \brief Passes the value wrapped inside the node to the first matching callback
+ * \param node      The node to be visited
+ * \param callback  A pack of callback functions that will be tried in order
  */
-template <typename Tfrom, typename... Tcallback>
-Control Visit(Tfrom&& from, Tcallback&&... callback) {
+template <typename Tnode, typename... Tcallback>
+Control Visit(Tnode&& node, Tcallback&&... callback) {
     static_assert(sizeof...(callback) > 0,
         "Visit() must be called with at least 1 callback argument."
     );
     Control control;
     (void)((control = Visit(
-        VISIT_IMPL_FWD(from),
+        VISIT_IMPL_FWD(node),
         VISIT_IMPL_FWD(callback)
     )) || ...); // fold over the callback pack
     return control;
@@ -194,12 +171,17 @@ struct identity {
 
 /**
  * \brief Visits each element of the container
- * \param container Container of elements
- * \param proj      Projection function for transforming elements into visitable types
- * \param callback  A pack of callback functions that will be tried in order
- *                  for each element
+ * \param container  Container of elements
+ * \param proj       Projection function for transforming container elements
+ *   into visitable node types
+ * \param callback   A pack of callback functions that will be tried in order
+ *   for each element of the container
  */
-template <typename Tcontainer, typename Tproj = detail::identity, typename... Tcallback>
+template <
+  typename Tcontainer,
+  typename Tproj = detail::identity,
+  typename... Tcallback
+>
 bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
     for (auto&& element : VISIT_IMPL_FWD(container)) {
         if (Visit(
@@ -210,7 +192,7 @@ bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
     }
     return false;
     // This function could, in principle, be implemented using
-    // std::invoke(proj, from).
+    // std::invoke(proj, node).
     // But this would require including <functional>.
 }
 

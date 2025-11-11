@@ -21,7 +21,7 @@ auto* FindFirst(Container&& container, Proj proj = { }) {
 
     Element* ptr = nullptr;
     VisitEach(static_cast<Container&&>(container), proj,
-        [&](Element& element, WrapsEither<T...>) {
+        [&](Element& element, Wraps<T...>) {
             ptr = &element;
             return true; // break VisitEach loop
         }
@@ -40,7 +40,7 @@ void ForEach(Container&& container, Callback&& callback, Proj proj = {}) {
     using Element = decltype(proj(*begin(std::declval<Container>())));
 
     VisitEach(static_cast<Container&&>(container), proj,
-        [&](Element&& element, WrapsEither<T...>) {
+        [&](Element&& element, Wraps<T...>) {
             return callback(static_cast<Element&&>(element));
         }
     );
