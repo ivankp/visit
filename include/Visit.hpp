@@ -181,16 +181,28 @@ Control Visit(Tnode&& node, Tcallback&& callback) {
  * \param node      The node to be visited
  * \param callback  A pack of callback functions that will be tried in order
  */
-template <typename Tnode, typename... Tcallback>
+template <typename Value = void, typename Tnode, typename... Tcallback>
 Control Visit(Tnode&& node, Tcallback&&... callback) {
     static_assert(sizeof...(callback) > 0,
         "Visit() must be called with at least 1 callback argument."
     );
     Control control;
-    (void)((control = Visit(
+    (void)((control = Visit<Value>(
         VISIT_IMPL_FWD(node),
         VISIT_IMPL_FWD(callback)
     )) || ...); // fold over the callback pack
+    return control;
+}
+
+template <typename... Value, typename Tnode, typename... Tcallback>
+auto Visit(Tnode&& node, Tcallback&&... callback)
+-> std::enable_if_t<(sizeof...(Value) > 1), Control>
+{
+    Control control;
+    (void)((control = Visit<Value>(
+        VISIT_IMPL_FWD(node),
+        VISIT_IMPL_FWD(callback)...
+    )) || ...); // fold over the Value pack
     return control;
 }
 
