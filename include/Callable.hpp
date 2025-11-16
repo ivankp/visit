@@ -69,3 +69,44 @@ struct CallableTypes<F, decltype(callableTypesHelper(std::declval<F>()), void())
 
 template <typename F>
 using CallableTypes_t = typename detail::CallableTypes<F>::Types;
+
+
+namespace detail {
+
+struct True  { static constexpr bool value = true;  };
+struct False { static constexpr bool value = false; };
+
+template <typename Base, typename T>
+struct AddType : Base { using type = T; };
+
+/*
+template <typename F, typename... Args>
+struct IsCallable {
+private:
+    template <typename T>
+    static auto test(int) -> ::detail::AddType<
+        ::detail::True,
+        decltype(std::declval<T>()(std::declval<Args>()...))
+    >;
+
+    template <typename>
+    static ::detail::False test(...);
+
+public:
+    using type = decltype(test<F>(0));
+};
+*/
+
+template <typename F, typename... Args>
+auto callableHelper(int) -> ::detail::AddType<
+    ::detail::True,
+    decltype(std::declval<F>()(std::declval<Args>()...))
+>;
+
+template <typename, typename...>
+::detail::False callableHelper(...);
+
+} // end namespace detail
+
+template <typename F, typename... Args>
+using IsCallable = decltype(::detail::callableHelper<F, Args...>(0));

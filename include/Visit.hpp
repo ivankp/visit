@@ -73,8 +73,8 @@ enum Control : unsigned char {
         (void) VISIT_IMPL_FWD(callback) ARGS; \
     }
 
-#define VISIT_IMPL_MATCH(ARG, NODE, MATCH) \
-    using ADL = ::visit::detail::VisitADL<DecayedNode, ARG>; \
+#define VISIT_IMPL_MATCH(VALUE, NODE, MATCH) \
+    using ADL = ::visit::detail::VisitADL<DecayedNode, VALUE>; \
     decltype(auto) match = ADL::match(VISIT_IMPL_FWD(node)); \
     if (!match) \
         return CONTINUE_MATCH; \
@@ -91,47 +91,89 @@ enum Control : unsigned char {
  * \param node      The node to be visited
  * \param callback  Visitor function
  */
-template <typename Tnode, typename Tcallback>
+template <typename Value = void, typename Tnode, typename Tcallback>
 Control Visit(Tnode&& node, Tcallback&& callback) {
-    using CallbackTypes = CallableTypes_t<Tcallback>;
     using DecayedNode = std::decay_t<Tnode>;
-    static constexpr bool retControl =
-        std::is_same_v<typename CallbackTypes::template Type<0>, bool>;
-    if constexpr (CallbackTypes::size == 2) {
-        using Arg = typename CallbackTypes::template Type<1>;
-        if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg>>) {
-            VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(node) ))
+    if constexpr (std::is_void_v<Value>) {
+        // Deduce value type from callback arguments
+        using CallbackTypes = CallableTypes_t<Tcallback>;
+        static constexpr bool retControl =
+            std::is_same_v<typename CallbackTypes::template Type<0>, bool>;
+        if constexpr (CallbackTypes::size == 2) {
+            using Arg = typename CallbackTypes::template Type<1>;
+            if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg>>) {
+                VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(node) ))
+            } else {
+                VISIT_IMPL_MATCH( Arg,
+                    ( ADL::convert(VISIT_IMPL_FWD(node)) ),
+                    ( ADL::convert(VISIT_IMPL_FWD(match)) )
+                );
+            }
+        } else if constexpr (CallbackTypes::size == 3) {
+            using Arg1 = typename CallbackTypes::template Type<1>;
+            using Arg2 = typename CallbackTypes::template Type<2>;
+            if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg2>>) {
+                VISIT_IMPL_MATCH( Arg1,
+                    ( ADL::convert(VISIT_IMPL_FWD(node)), VISIT_IMPL_FWD(node) ),
+                    ( ADL::convert(VISIT_IMPL_FWD(match)), VISIT_IMPL_FWD(node) )
+                );
+            } else if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg1>>) {
+                VISIT_IMPL_MATCH( Arg2,
+                    ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(node)) ),
+                    ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(match)) )
+                );
+            } else {
+                static_assert(::detail::false_v<Tnode, Arg1, Arg2>,
+                    "For a 2-argument callback, one of the arguments must match "
+                    "the visited type."
+                );
+            }
         } else {
-            VISIT_IMPL_MATCH( Arg,
-                ( ADL::convert(VISIT_IMPL_FWD(node)) ),
-                ( ADL::convert(VISIT_IMPL_FWD(match)) )
+            static_assert(::detail::false_v<Tcallback>,
+                "Visit callbacks must have either 1 or 2 arguments."
             );
         }
-    } else if constexpr (CallbackTypes::size == 3) {
-        using Arg1 = typename CallbackTypes::template Type<1>;
-        using Arg2 = typename CallbackTypes::template Type<2>;
-        if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg2>>) {
-            VISIT_IMPL_MATCH( Arg1,
+        return BREAK_MATCH;
+    } else {
+        // Value type provided
+        using CallableValueNode = IsCallable<Tcallback, Value, Tnode>;
+        if constexpr (CallableValueNode::value) {
+            static constexpr bool retControl =
+                std::is_same_v<typename CallableValueNode::type, bool>;
+            VISIT_IMPL_MATCH( Value,
                 ( ADL::convert(VISIT_IMPL_FWD(node)), VISIT_IMPL_FWD(node) ),
                 ( ADL::convert(VISIT_IMPL_FWD(match)), VISIT_IMPL_FWD(node) )
             );
-        } else if constexpr (std::is_same_v<DecayedNode, std::decay_t<Arg1>>) {
-            VISIT_IMPL_MATCH( Arg2,
-                ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(node)) ),
-                ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(match)) )
-            );
         } else {
-            static_assert(::detail::false_v<Tnode, Arg1, Arg2>,
-                "For a 2-argument callback, one of the arguments must match "
-                "the visited type."
-            );
+            using CallableNodeValue = IsCallable<Tcallback, Tnode, Value>;
+            if constexpr (CallableNodeValue::value) {
+                static constexpr bool retControl =
+                    std::is_same_v<typename CallableNodeValue::type, bool>;
+                VISIT_IMPL_MATCH( Value,
+                    ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(node)) ),
+                    ( VISIT_IMPL_FWD(node), ADL::convert(VISIT_IMPL_FWD(match)) )
+                );
+            } else {
+                using CallableValue = IsCallable<Tcallback, Value>;
+                if constexpr (CallableValue::value) {
+                    static constexpr bool retControl =
+                        std::is_same_v<typename CallableValue::type, bool>;
+                    VISIT_IMPL_MATCH( Value,
+                        ( ADL::convert(VISIT_IMPL_FWD(node)) ),
+                        ( ADL::convert(VISIT_IMPL_FWD(match)) )
+                    );
+                } else {
+                    using CallableNode = IsCallable<Tcallback, Tnode>;
+                    if constexpr (CallableNode::value) {
+                        static constexpr bool retControl =
+                            std::is_same_v<typename CallableNode::type, bool>;
+                        VISIT_IMPL_CONTROL(( VISIT_IMPL_FWD(node) ))
+                    }
+                }
+            }
         }
-    } else {
-        static_assert(::detail::false_v<Tcallback>,
-            "Visit callbacks must have either 1 or 2 arguments."
-        );
+        return CONTINUE_MATCH;
     }
-    return BREAK_MATCH;
 }
 
 /**
@@ -195,6 +237,46 @@ bool VisitEach(Tcontainer&& container, Tproj proj, Tcallback&&... callback) {
     // std::invoke(proj, node).
     // But this would require including <functional>.
 }
+
+namespace detail {
+
+template <typename Tvalue, typename Tcallback>
+auto WrapCallback(Tcallback&& callback) noexcept {
+    return [&](Tvalue&& value) mutable -> decltype(auto) {
+        return VISIT_IMPL_FWD(callback)(VISIT_IMPL_FWD(value));
+        // TODO: allow multiple callbacks
+    };
+}
+
+} // namespace visit::detail
+
+/**
+ * \brief Visits only elements of the container with value type in the
+ *   user-provided list
+ * \tparam Tvalue    List of value types to visit
+ * \param container  Container of elements
+ * \param proj       Projection function for transforming container elements
+ *   into visitable node types
+ * \param callback   A pack of callback functions that will be tried in order
+ *   for each element of the container
+ */
+/*
+template <
+    typename... Tvalue,
+    typename Tcontainer,
+    typename Tproj = detail::identity,
+    typename Tcallback
+>
+void VisitEachOf(Tcontainer&& container, Proj proj = {}, Tcallback&& callback) {
+    return VisitEach(
+        VISIT_IMPL_FWD(container),
+        proj,
+        detail::WrapCallback<Tvalue>(VISIT_IMPL_FWD(callback))...
+        // TODO: allow multiple callbacks
+    );
+}
+*/
+// TODO: Can this function handle passing both/either node and value to the callback?
 
 } // namespace visit
 
