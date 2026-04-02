@@ -35,6 +35,13 @@ for example in "${examples[@]}"; do
     done
 
     for comp in "${compilers[@]}"; do
+        if [ "$comp" = "g++" ]; then
+            nerr='-fmax-errors=3'
+        elif [ "$comp" = "clang++" ]; then
+            nerr='-ferror-limit=3'
+        else
+            unset nerr
+        fi
     for std in "${stds[@]}"; do
         exe="build/${tests%%.cpp}-$example-$std-$comp"
         exes+=("$exe")
@@ -45,6 +52,7 @@ for example in "${examples[@]}"; do
                     /Fe"$exe" "${tests}")
             else
                 cmd=("$comp" -std="$std" -O3 -Wall -Wextra -Werror -pedantic \
+                    $nerr \
                     -DEXAMPLE="$example" -I. -I.. -I../include \
                     "${tests}" -o "$exe")
             fi
