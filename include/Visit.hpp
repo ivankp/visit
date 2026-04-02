@@ -228,6 +228,8 @@ auto Visit(Tnode&& node, Tcallback&& callback)
     return control;
 }
 
+// TODO: factor out fold into a separate function and test compilation time
+
 #undef VISIT_IMPL_CONTROL
 
 namespace detail {
